@@ -44,6 +44,7 @@ class CustomUser(AbstractUser):
     username = models.CharField(max_length=150, blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=NORMAL_USER)
+    is_verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -63,6 +64,19 @@ class CustomUser(AbstractUser):
         return self.role == self.SUPERUSER
 
     def save(self, *args, **kwargs) -> None:
+        if self.pk:
+            existing = CustomUser.objects.get(pk=self.pk)
+            self.role = existing.role
+
         if not self.username:
             self.username = str(self.email).split("@")[0]
         super().save(*args, **kwargs)
+
+
+class EmailVerificationToken(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    token = models.CharField(max_length=50, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Verification Token for {self.user.username}"

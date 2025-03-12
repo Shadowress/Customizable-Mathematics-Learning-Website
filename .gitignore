@@ -4,3 +4,4 @@ staticfiles/
 .idea/*
 apps/*/migrations
 .env
+django_error.log
