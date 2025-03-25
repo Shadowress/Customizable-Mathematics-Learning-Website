@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from django.contrib.auth.base_user import BaseUserManager
@@ -7,6 +8,11 @@ from django.forms import EmailField
 
 
 # Create your models here.
+def user_profile_picture_path(instance, filename):
+    """Save profile pictures inside 'media/profile_pictures/' without duplicate folders."""
+    return os.path.join("profile_pictures", filename)
+
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields) -> Any:
         if not email:
@@ -30,6 +36,10 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser):
+    class Meta:
+        app_label = "users"
+        swappable = "AUTH_USER_MODEL"
+
     NORMAL_USER = "normal"
     CONTENT_MANAGER = "content_manager"
     SUPERUSER = "superuser"
@@ -41,6 +51,7 @@ class CustomUser(AbstractUser):
     ]
 
     email = models.EmailField(unique=True)
+    profile_picture = models.ImageField(upload_to=user_profile_picture_path, blank=True, null=True)
     username = models.CharField(max_length=150, blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=NORMAL_USER)
@@ -65,11 +76,11 @@ class CustomUser(AbstractUser):
 
     def save(self, *args, **kwargs) -> None:
         if self.pk:
-            existing = CustomUser.objects.get(pk=self.pk)
-            self.role = existing.role
+            self.__class__.objects.filter(pk=self.pk).update(role=self.role)
 
         if not self.username:
             self.username = str(self.email).split("@")[0]
+
         super().save(*args, **kwargs)
 
 

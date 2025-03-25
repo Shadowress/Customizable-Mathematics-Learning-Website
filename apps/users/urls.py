@@ -1,4 +1,4 @@
-from django.contrib.auth import views as auth_views
+from django.contrib.auth.views import LogoutView
 from django.urls import path, include
 
 from . import views
@@ -10,7 +10,7 @@ urlpatterns = [
     # --- Authentication ---
     path('login/', views.user_login, name='login'),
     path('signup/', views.user_signup, name='signup'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('logout/', views.CustomLogoutView.as_view(), name='logout'),
     path('accounts/', include('allauth.urls')),
 
     # --- Email Verification ---
@@ -30,6 +30,8 @@ urlpatterns = [
          name='resend_password_reset_verification'),
 
     # --- Dashboard Views ---
-    path('dashboard', views.dashboard, name='dashboard'),
-    path('content-manager-dashboard', views.content_manager_dashboard, name='content_manager_dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('profile/', views.profile, name='profile'),
+    path("upload-profile-picture/", views.profile_picture_upload, name="profile_picture_upload"),
+    path('content-manager-dashboard/', views.content_manager_dashboard, name='content_manager_dashboard'),
 ]

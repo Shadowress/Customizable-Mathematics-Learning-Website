@@ -1,0 +1,18 @@
+{% load static %}
+<!-- todo add accessibility selection -->
+
+<a href="{% url 'profile' %}">
+    <img src="
+         {% if user.profile_picture %}
+            {{ user.profile_picture.url }}
+         {% else %}
+            {% static 'img/default_profile.png' %}
+         {% endif %}
+         "
+         alt="Profile Picture">
+</a>
+
+<form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Log Out</button>
+</form>

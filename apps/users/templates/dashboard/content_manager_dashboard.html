@@ -1,13 +1,9 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block script %}
-<script>const logoutUrl = "{% url 'logout' %}";</script>
-<script src="{% static 'js/logout.js' %}"></script>
+{% block header %}
+    {% include 'includes/content_manager_header.html' %}
 {% endblock %}
 
 {% block content %}
 <p>Content Manager Dashboard</p>
-
-<button onclick="logout()">Log Out</button>
 {% endblock %}

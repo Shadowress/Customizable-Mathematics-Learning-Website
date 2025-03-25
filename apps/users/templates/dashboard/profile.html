@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block script %}
+<script src="{% static 'js/profile.js' %}"></script>
+{% endblock %}
+
+{% block header %}
+    {% include 'includes/normal_user_header.html' %}
+{% endblock %}
+
+{% block content %}
+<p>Profile</p>
+
+<form id="profile-picture-form" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <label for="id_profile_picture">
+        <img id="profile-preview"
+             src="
+             {% if user.profile_picture %}
+                {{ user.profile_picture.url }}
+             {% else %}
+                {% static 'img/default_profile.png' %}
+             {% endif %}
+             "
+             alt="Profile Picture"
+        >
+    </label>
+    <input type="file" id="id_profile_picture" class="hidden" name="profile_picture" accept="image/*">
+</form>
+
+<div class="view-mode">
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    {% if user.date_of_birth %}
+        <p><strong>Date of Birth:</strong> {{ user.date_of_birth }}</p>
+    {% endif %}
+</div>
+
+<form id="profile-form" method="POST">
+    {% csrf_token %}
+
+    <div class="edit-mode hidden">
+        {{ form|crispy }}
+
+        {% if user.has_usable_password and user.socialaccount_set.all|length == 0 %}
+            <a href="{% url 'password_reset' %}">
+                <button type="button">Change Password</button>
+            </a>
+        {% endif %}
+
+        <button type="submit">Save Changes</button>
+    </div>
+
+    <img src="{% static 'img/edit_button.png' %}" id="edit-btn" onclick="toggleEdit()">
+</form>
+{% endblock %}

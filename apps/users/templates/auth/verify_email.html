@@ -7,12 +7,8 @@ Verify Your Email
 {% endblock %}
 
 {% block script %}
-<script>
-    const resendUrl = "{% url 'resend_verification_email' %}";
-    const logoutUrl = "{% url 'logout' %}";
-</script>
+<script>const resendUrl = "{% url 'resend_verification_email' %}";</script>
 <script src="{% static 'js/verify_email.js' %}"></script>
-<script src="{% static 'js/logout.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -22,5 +18,9 @@ Verify Your Email
 <p>Waiting for verification...</p>
 
 <button onclick="resendEmail()">Resend Email</button>
-<button onclick="logout()">Log Out</button>
+
+<form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Log Out</button>
+</form>
 {% endblock %}

@@ -3,25 +3,40 @@ from http.client import HTTPResponse
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, get_backends, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
-from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.auth.views import LogoutView
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.mail import EmailMessage
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
-from .forms import CustomSignupForm
+from apps.users.models import CustomUser
+from .forms import CustomSignupForm, ProfileUpdateForm
 from .utils import generate_verification_token
 
 # Create your views here.
+User = get_user_model()
 signer = TimestampSigner()
+
+
+# --- Permission Check Functions ---
+def normal_user_required(user) -> bool:
+    return user.is_authenticated and user.role == CustomUser.NORMAL_USER
+
+
+def content_manager_required(user) -> bool:
+    return user.is_authenticated and user.role == CustomUser.CONTENT_MANAGER
 
 
 # --- Main Page ---
@@ -37,31 +52,45 @@ def home(request) -> HTTPResponse:
 # --- Authentication ---
 def user_login(request):
     redirection = _redirect_authenticated_user(request.user)
-
     if redirection:
         return redirection
 
     if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
+        post_data = request.POST.copy()
+        email = post_data.get("username", "").strip().lower()
+        post_data["username"] = email
+        form = AuthenticationForm(request, data=post_data)
+
+        try:
+            user = User.objects.get(email=email)
+
+            if not user.has_usable_password():
+                form.errors.pop("__all__", None)
+                form.add_error(None, "This email is registered with Google. Please log in using Google.")
+                return render(request, "auth/login.html", {"form": form})
+        except User.DoesNotExist:
+            user = None
 
         if form.is_valid():
             user = form.get_user()
 
-            if user and not user.is_superuser:
-                backend = get_backends()[0]
-                login(request, user, backend=backend.__class__.__module__ + "." + backend.__class__.__name__)
+            if user.is_superuser:
+                form.errors.pop("__all__", None)
+                form.add_error(None, "Please enter a correct email and password.")
+                return render(request, "auth/login.html", {"form": form})
 
-                if not user.is_verified:
-                    _send_email(user, "verification")
-                    return redirect("verify_email_page")
+            backend = get_backends()[0]
+            login(request, user, backend=backend.__class__.__module__ + "." + backend.__class__.__name__)
 
-                return _redirect_user_dashboard(user)
+            if not user.is_verified:
+                _send_email(user, "verification")
+                return redirect("verify_email_page")
 
-        form.errors.pop("__all__", None)
-        form.add_error(
-            None,
-            "Please enter a correct email and password. Note that both fields may be case-sensitive."
-        )
+            return _redirect_user_dashboard(user)
+
+        if user is None:
+            form.errors.pop("__all__", None)
+            form.add_error(None, "Please enter a correct email and password.")
 
     else:
         form = AuthenticationForm()
@@ -95,6 +124,14 @@ def user_signup(request):
     return render(request, "auth/signup.html", {"form": form})
 
 
+class CustomLogoutView(LogoutView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        storage = messages.get_messages(request)
+        list(storage)
+        return super().dispatch(request, *args, **kwargs)
+
+
 # --- Email Verification ---
 @login_required
 def verify_email_page(request):
@@ -103,8 +140,6 @@ def verify_email_page(request):
 
 @login_required
 def verify_email(request, token):
-    User = get_user_model()
-
     try:
         unsigned_data = signer.unsign(token, max_age=300)
         user_id = urlsafe_base64_decode(unsigned_data).decode()
@@ -151,11 +186,13 @@ def resend_verification_email(request):
 # --- Password Reset ---
 def password_reset_request(request):
     """Handles password reset requests for both logged-in and logged-out users."""
-    User = get_user_model()
-
     request.session.pop("password_reset_verified_user", None)
 
     if request.user.is_authenticated:
+        if request.user.socialaccount_set.filter(provider="google").exists():
+            messages.error(request, "Password reset is not available for Google accounts. Please log in using Google.")
+            return redirect("homepage")
+
         email = request.user.email
         user = User.objects.filter(email=email).first()
 
@@ -174,6 +211,10 @@ def password_reset_request(request):
             return redirect("password_reset_request")
 
         user = User.objects.filter(email=email).first()
+
+        if user and user.socialaccount_set.filter(provider="google").exists():
+            messages.error(request, "Password reset is not available for Google accounts. Please log in using Google.")
+            return redirect("homepage")
 
         if user:
             _send_email(user, "password_reset")
@@ -195,8 +236,6 @@ def verify_password_reset_page(request):
 
 def verify_password_reset(request, token):
     """Handles password reset form submission."""
-    User = get_user_model()
-
     try:
         unsigned_data = signer.unsign(token, max_age=300)
         user_id = urlsafe_base64_decode(unsigned_data).decode()
@@ -227,8 +266,6 @@ def verify_password_reset(request, token):
 
 
 def password_reset_form(request):
-    User = get_user_model()
-
     user_id = request.session.get("password_reset_verified_user")
 
     if not user_id:
@@ -238,10 +275,6 @@ def password_reset_form(request):
         user = User.objects.get(pk=user_id)
 
     except User.DoesNotExist:
-        return redirect("homepage")
-
-    if request.session.get("password_reset_email") != user.email:
-        request.session.flush()
         return redirect("homepage")
 
     if request.method == "POST":
@@ -273,8 +306,6 @@ def check_password_reset_verification(request):
 
 @csrf_exempt
 def resend_password_reset_verification(request):
-    User = get_user_model()
-
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method."}, status=400)
 
@@ -297,26 +328,54 @@ def resend_password_reset_verification(request):
         return JsonResponse({"error": "User with this email does not exist."}, status=404)
 
 
-# todo
-# def normal_user_required(user) -> bool:
-#     from .models import CustomUser
-#     return user.is_authenticated and user.role == CustomUser.NORMAL_USER
-#
-#
-# def content_manager_required(user) -> bool:
-#     from .models import CustomUser
-#     return user.is_authenticated and user.role == CustomUser.CONTENT_MANAGER
-
-
 # --- Dashboard Views ---
-# @user_passes_test(normal_user_required)
+@user_passes_test(normal_user_required, login_url="homepage")
 def dashboard(request) -> HTTPResponse:
-    return render(request, "dashboard/dashboard.html", {})
+    return render(request, "dashboard/dashboard.html")
 
 
-# @user_passes_test(content_manager_required)
+@user_passes_test(normal_user_required, login_url="homepage")
+def profile(request):
+    form = ProfileUpdateForm(instance=request.user)
+
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            form.save()
+            return redirect("profile")
+
+    return render(request, "dashboard/profile.html", {"form": form})
+
+
+@user_passes_test(normal_user_required, login_url="homepage")
+def profile_picture_upload(request):
+    if request.method == "POST" and request.FILES.get("profile_picture"):
+        user = request.user
+        file = request.FILES["profile_picture"]
+
+        # Define a fixed filename format based on user ID
+        file_name = f"profile_pictures/{user.id}_profile.jpg"
+
+        # Delete old file before saving new one (if exists)
+        if user.profile_picture:
+            default_storage.delete(user.profile_picture.path)
+
+        # Save new image
+        path = default_storage.save(file_name, ContentFile(file.read()))
+
+        # Ensure the database URL remains the same (avoid duplicates)
+        user.profile_picture = file_name
+        user.save()
+
+        return redirect("profile")  # Reload page to apply changes
+
+    return redirect("profile")
+
+
+@user_passes_test(content_manager_required, login_url="homepage")
 def content_manager_dashboard(request) -> HTTPResponse:
-    return render(request, "dashboard/content_manager_dashboard.html", {})
+    return render(request, "dashboard/content_manager_dashboard.html")
 
 
 # --- Private Methods ---
@@ -359,14 +418,22 @@ def _send_email(user, purpose):
     if purpose == "verification":
         url = f"http://{current_site.domain}{reverse('verify_email', args=[token])}"
         subject = "Verify Your Email"
-        message = f"Click the link below to verify your email:\n{url}\n\nThis link will expire in 5 minutes."
+        message = format_html(
+            'Click <a href="{}">this link</a> to verify your email.<br><br>'
+            'This link will expire in 5 minutes.', url
+        )
 
     elif purpose == "password_reset":
         url = f"http://{current_site.domain}{reverse('verify_password_reset', args=[token])}"
         subject = "Reset Your Password"
-        message = f"Click the link below to reset your password:\n{url}\n\nThis link will expire in 5 minutes."
+        message = format_html(
+            'Click <a href="{}">this link</a> to reset your password.<br><br>'
+            'This link will expire in 5 minutes.', url
+        )
 
     else:
         raise ValueError("Invalid email purpose")
 
-    send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email], fail_silently=False)
+    email = EmailMessage(subject, message, settings.EMAIL_HOST_USER, [user.email])
+    email.content_subtype = "html"  # Set email to be HTML formatted
+    email.send(fail_silently=False)

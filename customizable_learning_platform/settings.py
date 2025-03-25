@@ -42,12 +42,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+
     'crispy_forms',
     'crispy_bootstrap5',
+
     'apps.users',
     'apps.courses',
 ]
@@ -136,10 +139,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Media files
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -152,14 +158,36 @@ AUTHENTICATION_BACKENDS = (
 )
 
 LOGIN_URL = '/'
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_CONFIRM_REDIRECT_URL = None
+# Allauth settings for email-based authentication
+ACCOUNT_USERNAME_REQUIRED = False  # No username needed
+ACCOUNT_EMAIL_REQUIRED = True  # Email is mandatory
+ACCOUNT_LOGIN_METHODS = {'email'}  # Users log in using email only
+ACCOUNT_UNIQUE_EMAIL = True  # Ensure email is unique
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Redirects
+ACCOUNT_SIGNUP_REDIRECT_URL = "/"  # Redirect after successful signup
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"  # Redirect after logout
+
+# Case-insensitive email handling
+ACCOUNT_PRESERVE_USERNAME_CASING = False  # Ensure emails are saved in lowercase
+
+# Custom adapters
+SOCIALACCOUNT_ADAPTER = "users.adapters.CustomSocialAccountAdapter"
+
+# Social account settings
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Automatically log in users after OAuth
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Automatically create new users
+SOCIALACCOUNT_CONFIRM_REDIRECT_URL = None  # No extra confirmation step
+
+# Email verification settings
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification before login
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"  # Redirect after confirmation
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Expiry time for email confirmation
+
+# Email settings
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -197,4 +225,3 @@ LOGGING = {
         },
     },
 }
-
