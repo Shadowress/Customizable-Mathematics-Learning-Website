@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     let fileInput = document.getElementById("id_profile_picture");
+    let profileImage = document.getElementById("profile-preview");
 
     fileInput.addEventListener("change", function() {
         if (fileInput.files.length > 0) {
@@ -15,7 +16,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 body: formData
             }).then(response => {
                 if (response.ok) {
-                    location.reload(); // Reload page after successful upload
+                    profileImage.src = profileImage.src.split("?")[0] + "?t=" + new Date().getTime();
+                    location.reload();
                 } else {
                     alert("Failed to upload image.");
                 }

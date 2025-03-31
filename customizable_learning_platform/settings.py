@@ -162,30 +162,30 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Allauth settings for email-based authentication
-ACCOUNT_USERNAME_REQUIRED = False  # No username needed
-ACCOUNT_EMAIL_REQUIRED = True  # Email is mandatory
-ACCOUNT_LOGIN_METHODS = {'email'}  # Users log in using email only
-ACCOUNT_UNIQUE_EMAIL = True  # Ensure email is unique
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_UNIQUE_EMAIL = True
 
 # Redirects
-ACCOUNT_SIGNUP_REDIRECT_URL = "/"  # Redirect after successful signup
-ACCOUNT_LOGOUT_REDIRECT_URL = "/"  # Redirect after logout
+ACCOUNT_SIGNUP_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 
 # Case-insensitive email handling
-ACCOUNT_PRESERVE_USERNAME_CASING = False  # Ensure emails are saved in lowercase
+ACCOUNT_PRESERVE_USERNAME_CASING = False
 
 # Custom adapters
 SOCIALACCOUNT_ADAPTER = "users.adapters.CustomSocialAccountAdapter"
 
 # Social account settings
-SOCIALACCOUNT_LOGIN_ON_GET = True  # Automatically log in users after OAuth
-SOCIALACCOUNT_AUTO_SIGNUP = True  # Automatically create new users
-SOCIALACCOUNT_CONFIRM_REDIRECT_URL = None  # No extra confirmation step
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_CONFIRM_REDIRECT_URL = None
 
 # Email verification settings
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification before login
-ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"  # Redirect after confirmation
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Expiry time for email confirmation
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 
 # Email settings
 EMAIL_HOST = 'smtp.gmail.com'

@@ -1,8 +1,3 @@
-<a href="{% url 'profile' %}">
-    <!--  todo add default profile picture  -->
-    <img src="{{ user.profile_picture.url }}" alt="Profile Picture">
-</a>
-
 <form action="{% url 'logout' %}" method="post">
     {% csrf_token %}
     <button type="submit">Log Out</button>

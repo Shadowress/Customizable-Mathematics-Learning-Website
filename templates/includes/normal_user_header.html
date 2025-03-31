@@ -1,18 +1,44 @@
 {% load static %}
-<!-- todo add accessibility selection -->
 
-<a href="{% url 'profile' %}">
-    <img src="
-         {% if user.profile_picture %}
-            {{ user.profile_picture.url }}
-         {% else %}
-            {% static 'img/default_profile.png' %}
-         {% endif %}
-         "
-         alt="Profile Picture">
-</a>
+<header>
+    <button id="accessibility-btn" aria-haspopup="true" aria-expanded="false">
+        ⚙️ Accessibility
+    </button>
+    <div id="accessibility-menu" class="dropdown-menu">
+        <label>
+            <input type="checkbox" id="dark-mode-toggle"> Dark Mode
+        </label>
+        <label>
+            <select id="color-theme">
+                <option value="default">Default</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+            </select>
+            Color Theme
+        </label>
+        <label>
+            <input type="range" id="font-size" min="14" max="24" value="16">
+            Font Size
+        </label>
+        <label>
+            <input type="range" id="spacing" min="1" max="3" step="0.5" value="1.5">
+            Spacing
+        </label>
+    </div>
 
-<form action="{% url 'logout' %}" method="post">
-    {% csrf_token %}
-    <button type="submit">Log Out</button>
-</form>
+    <a href="{% url 'profile' %}">
+        <img src="
+             {% if user.profile_picture %}
+                {{ user.profile_picture.url }}
+             {% else %}
+                {% static 'img/default_profile.png' %}
+             {% endif %}
+             "
+             alt="Profile Picture">
+    </a>
+
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+    </form>
+</header>

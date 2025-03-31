@@ -1,0 +1,38 @@
+header {
+    position: relative;
+    padding: 10px;
+    background: #f4f4f4;
+}
+
+/* Hide dropdown menu by default */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Show dropdown when "show" class is added */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* Style for the accessibility button */
+#accessibility-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#accessibility-btn:hover {
+    background-color: #0056b3;
+}

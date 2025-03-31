@@ -5,15 +5,15 @@
 {% load socialaccount %}
 
 {% block content %}
-<form method="post">
-    {% csrf_token %}
-    {{ form|crispy }}
-    <button type="submit">Sign Up</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit">Sign Up</button>
+    </form>
 
-<a href="{% provider_login_url 'google' %}">
-    <img style="width:500px" src="{% static 'img/google.png' %}" alt="Google Sign Up">
-</a>
+    <a href="{% provider_login_url 'google' %}">
+        <img style="width:500px" src="{% static 'img/google.png' %}" alt="Google Sign Up">
+    </a>
 
-<p>Have an account? Click <a href="{% url 'login' %}">here</a> to login</p>
+    <p>Have an account? Click <a href="{% url 'login' %}">here</a> to login</p>
 {% endblock %}

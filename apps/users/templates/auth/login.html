@@ -5,26 +5,26 @@
 {% load socialaccount %}
 
 {% block content %}
-{% if messages %}
-    <div class="alert alert-danger">
-        <ul style="margin-bottom: 0px">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-{% endif %}
+    {% if messages %}
+        <div class="alert alert-danger">
+            <ul style="margin-bottom: 0px">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    {{ form|crispy }}
-    <a href="{% url 'password_reset' %}">Forgot Password?</a><br>
-    <button type="submit">Login</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <a href="{% url 'password_reset' %}">Forgot Password?</a><br>
+        <button type="submit">Login</button>
+    </form>
 
-<a href="{% provider_login_url 'google' method='redirect' %}">
-    <img style="width:500px" src="{% static 'img/google.png' %}" alt="Google Login">
-</a>
+    <a href="{% provider_login_url 'google' method='redirect' %}">
+        <img style="width:500px" src="{% static 'img/google.png' %}" alt="Google Login">
+    </a>
 
-<p>Don't have an account? Click <a href="{% url 'signup' %}">here</a> to sign up</p>
+    <p>Don't have an account? Click <a href="{% url 'signup' %}">here</a> to sign up</p>
 {% endblock %}

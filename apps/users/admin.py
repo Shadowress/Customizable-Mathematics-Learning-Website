@@ -62,6 +62,12 @@ class CustomUserAdmin(UserAdmin):
         extra_context['title'] = "Add Content Manager"
         return super().add_view(request, form_url, extra_context)
 
+    def save_model(self, request, obj, form, change):
+        """Set role to 'content_manager' when a new user is added."""
+        if not change:
+            obj.role = "content_manager"
+        super().save_model(request, obj, form, change)
+
 
 admin.site.unregister(Group)
 admin.site.register(CustomUser, CustomUserAdmin)

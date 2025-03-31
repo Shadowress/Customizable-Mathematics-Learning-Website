@@ -5,5 +5,19 @@
 {% endblock %}
 
 {% block content %}
-<p>Content Manager Dashboard</p>
+    <p>Content Manager Dashboard</p>
+
+    <a href="{% url 'create_course' %}"><button>Create Course</button></a>
+
+    <h2>Available Courses</h2>
+    <ul>
+        {% for course in courses %}
+            <li>
+                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+                ({{ course.get_difficulty_display }})
+            </li>
+        {% empty %}
+            <p>No courses available.</p>
+        {% endfor %}
+    </ul>
 {% endblock %}

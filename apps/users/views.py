@@ -21,22 +21,14 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
-from apps.users.models import CustomUser
+from apps.courses.models import Course
 from .forms import CustomSignupForm, ProfileUpdateForm
+from .permissions import normal_user_required, content_manager_required
 from .utils import generate_verification_token
 
 # Create your views here.
 User = get_user_model()
 signer = TimestampSigner()
-
-
-# --- Permission Check Functions ---
-def normal_user_required(user) -> bool:
-    return user.is_authenticated and user.role == CustomUser.NORMAL_USER
-
-
-def content_manager_required(user) -> bool:
-    return user.is_authenticated and user.role == CustomUser.CONTENT_MANAGER
 
 
 # --- Main Page ---
@@ -331,7 +323,8 @@ def resend_password_reset_verification(request):
 # --- Dashboard Views ---
 @user_passes_test(normal_user_required, login_url="homepage")
 def dashboard(request) -> HTTPResponse:
-    return render(request, "dashboard/dashboard.html")
+    courses = Course.objects.all()
+    return render(request, "dashboard/dashboard.html",  {"normal_user_header_included": True, "courses": courses})
 
 
 @user_passes_test(normal_user_required, login_url="homepage")
@@ -345,7 +338,7 @@ def profile(request):
             form.save()
             return redirect("profile")
 
-    return render(request, "dashboard/profile.html", {"form": form})
+    return render(request, "dashboard/profile.html", {"normal_user_header_included": True, "form": form})
 
 
 @user_passes_test(normal_user_required, login_url="homepage")
@@ -375,7 +368,9 @@ def profile_picture_upload(request):
 
 @user_passes_test(content_manager_required, login_url="homepage")
 def content_manager_dashboard(request) -> HTTPResponse:
-    return render(request, "dashboard/content_manager_dashboard.html")
+    courses = Course.objects.all()
+    return render(request, "dashboard/content_manager_dashboard.html",
+                  {"content_manager_header_included": True, "courses": courses})
 
 
 # --- Private Methods ---

@@ -1,9 +1,23 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block header %}
     {% include 'includes/normal_user_header.html' %}
 {% endblock %}
 
 {% block content %}
-<p>Dashboard</p>
+    <p>Dashboard</p>
+
+    <h2>Available Courses</h2>
+    <ul>
+        {% for course in courses %}
+            <li>
+                <a href="{% url 'course' course.id %}">{{ course.title }}</a>
+                ({{ course.get_difficulty_display }})
+            </li>
+        {% empty %}
+            <p>No courses available.</p>
+        {% endfor %}
+    </ul>
 {% endblock %}
