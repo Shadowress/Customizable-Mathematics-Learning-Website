@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Create Course{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="{% static 'css/create_course.css' %}">
+{% endblock %}
+
+{% block header %}
+    {% include 'includes/content_manager_header.html' %}
+{% endblock %}
+
+{% block content %}
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ course_form|crispy }}
+        <button type="submit" class="btn btn-primary">Create Course</button>
+
+        {{ section_formset.management_form }}
+        <div id="sections">
+            {% for form in section_formset %}
+                <div class="section-form">
+                    <h3>Section {{ forloop.counter }}</h3>
+                    {% for field in form %}
+                        {% if "DELETE" not in field.name %}
+                            {{ field|crispy }}
+                        {% else %}
+                            <input type="hidden" name="{{ field.name }}" class="delete-checkbox">
+                        {% endif %}
+                    {% endfor %}
+
+                    <button type="button" class="remove-section btn btn-danger">Remove</button>
+
+                    <div class="section-contents" id="section-{{ forloop.counter }}-contents">
+                        <!-- Content Forms will be added here -->
+                    </div>
+
+                    <div class="section-quizzes" id="section-{{ forloop.counter }}-quizzes">
+                        <!-- Quiz Forms will be added here -->
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="global-add-toolbar" class="add-toolbar">
+            <button type="button" class="toolbar-btn" id="add-text-btn" title="Add Text">
+                <i class="fas fa-font"></i>
+            </button>
+            <button type="button" class="toolbar-btn" id="add-image-btn" title="Add Image">
+                <i class="fas fa-image"></i>
+            </button>
+            <button type="button" class="toolbar-btn" id="add-video-btn" title="Add Video">
+                <i class="fas fa-video"></i>
+            </button>
+            <button type="button" class="toolbar-btn" id="add-quiz-btn" title="Add Quiz">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <button type="button" class="toolbar-btn" id="add-section-btn" title="Add Section">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </form>
+
+    <!-- Hidden template for empty section form -->
+    <div id="empty-section-form" style="display: none;">
+        <div class="section-form">
+            <h3>Section __num__</h3>
+            {{ section_formset.empty_form|crispy }}
+            <button type="button" class="remove-section btn btn-danger">Remove</button>
+        </div>
+    </div>
+
+    <!-- Hidden template for empty content form (Text Content) -->
+    <div id="empty-content-form" style="display: none;">
+        <div class="content-form">
+            <!-- Manually render the content_type field (hidden) -->
+            <div class="form-group">
+                {{ text_content_formset.empty_form.content_type }}
+            </div>
+
+            {{ text_content_formset.empty_form|crispy }}
+            <button type="button" class="remove-content btn btn-danger">Remove Content</button>
+        </div>
+    </div>
+
+    <!-- Hidden template for empty image content form -->
+    <div id="empty-image-content-form" style="display: none;">
+        <div class="content-form">
+            <!-- Manually render the content_type field (hidden) -->
+            <div class="form-group">
+                {{ image_content_formset.empty_form.content_type }}
+            </div>
+
+            {{ image_content_formset.empty_form|crispy }}
+            <button type="button" class="remove-content btn btn-danger">Remove Image</button>
+        </div>
+    </div>
+
+    <!-- Hidden template for empty video content form -->
+    <div id="empty-video-content-form" style="display: none;">
+        <div class="content-form">
+            <!-- Manually render the content_type field (hidden) -->
+            <div class="form-group">
+                {{ video_content_formset.empty_form.content_type }}
+            </div>
+
+            {{ video_content_formset.empty_form|crispy }}
+            <button type="button" class="remove-content btn btn-danger">Remove Video</button>
+        </div>
+    </div>
+
+    <!-- Hidden template for empty quiz form -->
+    <div id="empty-quiz-form" style="display: none;">
+        <div class="quiz-form">
+            {{ quiz_formset.empty_form|crispy }}
+            <button type="button" class="remove-quiz btn btn-danger">Remove Quiz</button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'js/create_course.js' %}"></script>
+{% endblock %}
