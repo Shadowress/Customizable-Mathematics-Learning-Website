@@ -12,8 +12,7 @@
     <h2>Available Courses</h2>
     <div id="container">
         {% for course in courses %}
-<!--        todo add url ltr,  url 'edit_course' course.id -->
-            <a href="">
+            <a href="{% url 'edit_course' course.slug %}">
                 <div style="cursor: pointer">
                     {{ course.title }}
                     {{ course.get_difficulty_display }}

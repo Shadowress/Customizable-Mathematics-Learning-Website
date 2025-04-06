@@ -11,63 +11,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let currentSection = null;
 
-    function logState(message) {
-        console.log(`=== DEBUG: ${message} ===`);
-        console.log("Current Section:", currentSection ? currentSection.querySelector("h3").textContent : "None");
-        console.log("Total Sections:", document.querySelectorAll(".section-form").length);
-        console.log("Total Content Forms:", document.querySelectorAll(".content-form").length);
-        console.log("Total Quiz Forms:", document.querySelectorAll(".quiz-form").length);
-        console.log("Total Forms Value:", totalForms.value);
-        console.log("====================");
-    }
-
     // === SECTION: Utility Functions ===
     function updateSectionNumbers() {
-        const sectionForms = document.querySelectorAll(".section-form");
+        const sectionForms = Array.from(document.querySelectorAll(".section-form"))
+            .filter(form => !form.closest("#empty-section-form"));
+
         sectionForms.forEach((form, index) => {
             const sectionHeader = form.querySelector("h3");
             sectionHeader.textContent = `Section ${index + 1}`;
+
+            const orderField = form.querySelector('input[name$="order"]');
+            if (orderField) {
+                orderField.value = index;
+            }
         });
-
-        logState("Updated Section Numbers");
-
     }
 
     function updateContentNumbers() {
         document.querySelectorAll(".section-form").forEach((section) => {
-            const contentForms = section.querySelectorAll(".content-form");
+            const contentForms = Array.from(section.querySelectorAll(".content-form, .image-form, .video-form"))
+                .filter(form => !form.closest('[id^="empty-"]'));
+
             contentForms.forEach((content, index) => {
+                const orderField = content.querySelector('input[name$="order"]');
+                if (orderField) {
+                    orderField.value = index;
+                }
+
                 content.querySelectorAll("[name]").forEach((input) => {
                     input.name = input.name.replace(/\d+/, index);
                 });
             });
         });
-
-        logState("Updated Content Numbers");
-
     }
 
     function updateQuizNumbers() {
         document.querySelectorAll(".section-form").forEach((section) => {
-            const quizForms = section.querySelectorAll(".quiz-form");
+            const quizForms = Array.from(section.querySelectorAll(".quiz-form"))
+                .filter(form => !form.closest("#empty-quiz-form"));
+
             quizForms.forEach((quiz, index) => {
+                const orderField = quiz.querySelector('input[name$="order"]');
+                if (orderField) {
+                    orderField.value = index;
+                }
+
                 quiz.querySelectorAll("[name]").forEach((input) => {
                     input.name = input.name.replace(/\d+/, index);
                 });
             });
         });
-
-        logState("Updated Quiz Numbers");
-
     }
 
     function setActiveSection(section) {
         currentSection = section;
         document.querySelectorAll(".section-form").forEach(s => s.classList.remove("active"));
         section.classList.add("active");
-
-        logState("Set Active Section");
-
     }
 
     function addContent(contentType) {
@@ -103,13 +102,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Clone and append the appropriate content form
-        const contentForm = document.getElementById(formId).cloneNode(true);
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = document.getElementById(formId).innerHTML;
+
+        const contentForm = wrapper.querySelector(".content-form") || wrapper.querySelector(".quiz-form");
         contentForm.style.display = "block";
         contentContainer.appendChild(contentForm);
         updateContentNumbers();
-
-        logState(`Added ${contentType} Content`);
-
     }
 
     // === SECTION: Add Section ===
@@ -126,9 +125,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         totalForms.value = formIndex + 1;
         updateSectionNumbers();
-
-        logState("Added New Section");
-
     });
 
     // === SECTION: Remove Section ===
@@ -142,9 +138,6 @@ document.addEventListener("DOMContentLoaded", function () {
             currentSection = null;
 
             updateSectionNumbers();
-
-            logState("Removed Section");
-
         }
     });
 
@@ -177,24 +170,18 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("click", function (event) {
         if (event.target.classList.contains("remove-content")) {
             const contentDiv = event.target.closest(".content-form");
-            if (contentDiv) {
+            if (contentDiv && !contentDiv.closest("#empty-content-form")) {
                 contentDiv.remove();
             }
             updateContentNumbers();
-
-            logState("Removed Content");
-
         }
 
         if (event.target.classList.contains("remove-quiz")) {
             const quizDiv = event.target.closest(".quiz-form");
-            if (quizDiv) {
+            if (quizDiv && !quizDiv.closest("#empty-quiz-form")) {
                 quizDiv.remove();
             }
             updateQuizNumbers();
-
-            logState("Removed Content");
-
         }
     });
 

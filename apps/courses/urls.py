@@ -4,9 +4,9 @@ from . import views
 
 urlpatterns = [
     # --- Normal Users ---
-    path('<int:course_id>/', views.course, name='course'),
+    path('<slug:slug>/', views.course, name='course'),
 
     # --- Content Managers ---
     path('create-course/', views.create_course, name='create_course'),
-    path('edit-course/', views.edit_course, name='edit_course'),
+    path('edit-course/<slug:slug>/', views.edit_course, name='edit_course'),
 ]

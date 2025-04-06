@@ -3,6 +3,8 @@ import os
 from django.db import models
 
 from apps.users.models import CustomUser
+from django.utils.text import slugify
+
 
 
 # Create your models here.
@@ -31,6 +33,7 @@ class Course(models.Model):
     ]
 
     title: str = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
     description: str = models.TextField(blank=True)
     difficulty: str = models.CharField(max_length=15, choices=DIFFICULTY_LEVELS, blank=False, null=False)
     estimated_completion_time = models.PositiveIntegerField(
@@ -40,6 +43,23 @@ class Course(models.Model):
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=DRAFT)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="courses", null=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            original_course = Course.objects.get(pk=self.pk)
+            if original_course.title != self.title:
+                self.slug = slugify(self.title)
+
+        if not self.slug:
+            self.slug = slugify(self.title)
+
+        original_slug = self.slug
+        counter = 1
+        while Course.objects.filter(slug=self.slug).exists():
+            self.slug = f"{original_slug}-{counter}"
+            counter += 1
+
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.title
@@ -53,7 +73,7 @@ class Section(models.Model):
         ordering = ["order"]
 
     def save(self, *args, **kwargs):
-        if not self.order:
+        if self.order is None:
             self.order = self.course.sections.count() + 1
         super().save(*args, **kwargs)
 
@@ -85,8 +105,7 @@ class Content(models.Model):
         ordering = ["order"]
 
     def save(self, *args, **kwargs):
-        """Set the order automatically if not provided."""
-        if not self.order:
+        if self.order is None:
             self.order = self.section.contents.count() + 1
         super().save(*args, **kwargs)
 
@@ -114,8 +133,8 @@ class Quiz(models.Model):
         ordering = ['order']
 
     def save(self, *args, **kwargs):
-        if not self.order:
-            self.order = self.section.quizzes.count() + 1
+        if self.order is None:
+            self.order = self.section.contents.count() + 1
         super().save(*args, **kwargs)
 
     def __str__(self):

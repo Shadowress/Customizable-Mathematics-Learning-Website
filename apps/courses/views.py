@@ -10,8 +10,8 @@ from .forms import SectionFormSet, QuizFormSet
 
 # Create your views here.
 @user_passes_test(normal_user_required, login_url="homepage")
-def course(request, course_id):
-    course = Course.objects.filter(status='published')
+def course(request, slug):
+    course = get_object_or_404(Course, slug=slug, status='published')
     return render(request, "normal_users/course.html", {"course": course})
 
 
@@ -91,7 +91,7 @@ def create_course(request):
 
 
 @user_passes_test(content_manager_required, login_url="homepage")
-def edit_course(request, course_id):
-    course = get_object_or_404(Course, id=course_id)
+def edit_course(request, slug):
+    course = get_object_or_404(Course, slug=slug, status='published')
     # Add logic for editing the course (e.g., form handling)
     return render(request, "content_managers/edit_course.html", {"course": course})

@@ -69,6 +69,9 @@
     <div id="empty-section-form" style="display: none;">
         <div class="section-form">
             <h3>Section __num__</h3>
+
+            <input type="hidden" name="order" class="order-field" value="0">
+
             {{ section_formset.empty_form|crispy }}
             <button type="button" class="remove-section btn btn-danger">Remove</button>
         </div>
@@ -81,6 +84,8 @@
             <div class="form-group">
                 {{ text_content_formset.empty_form.content_type }}
             </div>
+
+            <input type="hidden" name="order" class="order-field" value="0">
 
             {{ text_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Content</button>
@@ -95,6 +100,8 @@
                 {{ image_content_formset.empty_form.content_type }}
             </div>
 
+            <input type="hidden" name="order" class="order-field" value="0">
+
             {{ image_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Image</button>
         </div>
@@ -108,6 +115,8 @@
                 {{ video_content_formset.empty_form.content_type }}
             </div>
 
+            <input type="hidden" name="order" class="order-field" value="0">
+
             {{ video_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Video</button>
         </div>
@@ -116,6 +125,8 @@
     <!-- Hidden template for empty quiz form -->
     <div id="empty-quiz-form" style="display: none;">
         <div class="quiz-form">
+            <input type="hidden" name="order" class="order-field" value="0">
+
             {{ quiz_formset.empty_form|crispy }}
             <button type="button" class="remove-quiz btn btn-danger">Remove Quiz</button>
         </div>
