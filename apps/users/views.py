@@ -324,7 +324,7 @@ def resend_password_reset_verification(request):
 @user_passes_test(normal_user_required, login_url="homepage")
 def dashboard(request) -> HTTPResponse:
     courses = Course.objects.all()
-    return render(request, "dashboard/dashboard.html",  {"normal_user_header_included": True, "courses": courses})
+    return render(request, "dashboard/dashboard.html", {"normal_user_header_included": True, "courses": courses})
 
 
 @user_passes_test(normal_user_required, login_url="homepage")
@@ -368,9 +368,15 @@ def profile_picture_upload(request):
 
 @user_passes_test(content_manager_required, login_url="homepage")
 def content_manager_dashboard(request) -> HTTPResponse:
-    courses = Course.objects.all()
-    return render(request, "dashboard/content_manager_dashboard.html",
-                  {"content_manager_header_included": True, "courses": courses})
+    published_courses = Course.objects.filter(status='published')
+    draft_courses = Course.objects.filter(status='draft')
+    return render(request,
+                  "dashboard/content_manager_dashboard.html",
+                  {
+                      "content_manager_header_included": True,
+                      "published_courses": published_courses,
+                      "draft_courses": draft_courses,
+                  })
 
 
 # --- Private Methods ---

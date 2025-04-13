@@ -7,19 +7,29 @@
 {% block content %}
     <p>Content Manager Dashboard</p>
 
-    <a href="{% url 'create_course' %}"><button>Create Course</button></a>
+    <a href="{% url 'create_course' %}"><button>Create New Course</button></a>
 
-    <h2>Available Courses</h2>
     <div id="container">
-        {% for course in courses %}
+        <h2>Published Courses</h2>
+        {% for course in published_courses %}
             <a href="{% url 'edit_course' course.slug %}">
                 <div style="cursor: pointer">
-                    {{ course.title }}
-                    {{ course.get_difficulty_display }}
+                    {{ course.title }} - {{ course.get_difficulty_display }}
                 </div>
             </a>
         {% empty %}
-            <p>No courses available.</p>
+            <p>No published courses available.</p>
+        {% endfor %}
+
+        <h2>Draft Courses</h2>
+        {% for course in draft_courses %}
+            <a href="{% url 'edit_course' course.slug %}">
+                <div style="cursor: pointer">
+                    {{ course.title }} - {{ course.get_difficulty_display }}
+                </div>
+            </a>
+        {% empty %}
+            <p>No draft courses available.</p>
         {% endfor %}
     </div>
 {% endblock %}

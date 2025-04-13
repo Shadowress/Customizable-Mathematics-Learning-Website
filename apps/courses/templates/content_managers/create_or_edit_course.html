@@ -7,7 +7,7 @@
 
 {% block css %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="{% static 'css/create_course.css' %}">
+    <link rel="stylesheet" href="{% static 'css/create_or_edit_course.css' %}">
 {% endblock %}
 
 {% block header %}
@@ -18,33 +18,17 @@
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ course_form|crispy }}
-        <button type="submit" class="btn btn-primary">Create Course</button>
+
+        <button type="submit" name="action" value="save_draft">Save Course</button>
+        <button type="submit" name="action" value="publish">Publish Course</button>
 
         {{ section_formset.management_form }}
-        <div id="sections">
-            {% for form in section_formset %}
-                <div class="section-form">
-                    <h3>Section {{ forloop.counter }}</h3>
-                    {% for field in form %}
-                        {% if "DELETE" not in field.name %}
-                            {{ field|crispy }}
-                        {% else %}
-                            <input type="hidden" name="{{ field.name }}" class="delete-checkbox">
-                        {% endif %}
-                    {% endfor %}
+        {{ text_content_formset.management_form }}
+        {{ image_content_formset.management_form }}
+        {{ video_content_formset.management_form }}
+        {{ quiz_formset.management_form }}
 
-                    <button type="button" class="remove-section btn btn-danger">Remove</button>
-
-                    <div class="section-contents" id="section-{{ forloop.counter }}-contents">
-                        <!-- Content Forms will be added here -->
-                    </div>
-
-                    <div class="section-quizzes" id="section-{{ forloop.counter }}-quizzes">
-                        <!-- Quiz Forms will be added here -->
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+        <div id="sections"></div>
 
         <div id="global-add-toolbar" class="add-toolbar">
             <button type="button" class="toolbar-btn" id="add-text-btn" title="Add Text">
@@ -68,25 +52,23 @@
     <!-- Hidden template for empty section form -->
     <div id="empty-section-form" style="display: none;">
         <div class="section-form">
-            <h3>Section __num__</h3>
-
-            <input type="hidden" name="order" class="order-field" value="0">
-
+            <h3 class="section-title">Section __num__</h3>
             {{ section_formset.empty_form|crispy }}
             <button type="button" class="remove-section btn btn-danger">Remove</button>
+
+            <div class="section-contents">
+                <!-- Content Forms will be added here -->
+            </div>
+
+            <div class="section-quizzes">
+                <!-- Quiz Forms will be added here -->
+            </div>
         </div>
     </div>
 
-    <!-- Hidden template for empty content form (Text Content) -->
-    <div id="empty-content-form" style="display: none;">
-        <div class="content-form">
-            <!-- Manually render the content_type field (hidden) -->
-            <div class="form-group">
-                {{ text_content_formset.empty_form.content_type }}
-            </div>
-
-            <input type="hidden" name="order" class="order-field" value="0">
-
+    <!-- Hidden template for empty text content form -->
+    <div id="empty-text-content-form" style="display: none;">
+        <div class="text-content-form">
             {{ text_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Content</button>
         </div>
@@ -94,14 +76,7 @@
 
     <!-- Hidden template for empty image content form -->
     <div id="empty-image-content-form" style="display: none;">
-        <div class="content-form">
-            <!-- Manually render the content_type field (hidden) -->
-            <div class="form-group">
-                {{ image_content_formset.empty_form.content_type }}
-            </div>
-
-            <input type="hidden" name="order" class="order-field" value="0">
-
+        <div class="image-content-form">
             {{ image_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Image</button>
         </div>
@@ -109,14 +84,7 @@
 
     <!-- Hidden template for empty video content form -->
     <div id="empty-video-content-form" style="display: none;">
-        <div class="content-form">
-            <!-- Manually render the content_type field (hidden) -->
-            <div class="form-group">
-                {{ video_content_formset.empty_form.content_type }}
-            </div>
-
-            <input type="hidden" name="order" class="order-field" value="0">
-
+        <div class="video-content-form">
             {{ video_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Video</button>
         </div>
@@ -125,8 +93,6 @@
     <!-- Hidden template for empty quiz form -->
     <div id="empty-quiz-form" style="display: none;">
         <div class="quiz-form">
-            <input type="hidden" name="order" class="order-field" value="0">
-
             {{ quiz_formset.empty_form|crispy }}
             <button type="button" class="remove-quiz btn btn-danger">Remove Quiz</button>
         </div>
@@ -134,5 +100,21 @@
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'js/create_course.js' %}"></script>
+    <script src="{% static 'js/create_or_edit_course.js' %}"></script>
+    <script>
+        const getJsonData = (data) => {
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                console.error("Failed to parse JSON data:", e);
+                return [];
+            }
+        };
+
+        const existingSections = getJsonData('{{ existing_sections|default:"[]"|escapejs }}');
+        const existingTextContents = getJsonData('{{ existing_text_contents|default:"[]"|escapejs }}');
+        const existingImageContents = getJsonData('{{ existing_image_contents|default:"[]"|escapejs }}');
+        const existingVideoContents = getJsonData('{{ existing_video_contents|default:"[]"|escapejs }}');
+        const existingQuizzes = getJsonData('{{ existing_quizzes|default:"[]"|escapejs }}');
+    </script>
 {% endblock %}

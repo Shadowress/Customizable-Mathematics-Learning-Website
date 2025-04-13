@@ -1,10 +1,9 @@
 import os
 
 from django.db import models
-
-from apps.users.models import CustomUser
 from django.utils.text import slugify
 
+from apps.users.models import CustomUser
 
 
 # Create your models here.
@@ -32,14 +31,14 @@ class Course(models.Model):
         (PUBLISHED, "Published"),
     ]
 
-    title: str = models.CharField(max_length=255, unique=True)
+    title: str = models.CharField(max_length=255, unique=True, blank=False, null=False)
     slug = models.SlugField(unique=True, blank=True)
-    description: str = models.TextField(blank=True)
+    description: str = models.TextField(blank=False, null=False)
     difficulty: str = models.CharField(max_length=15, choices=DIFFICULTY_LEVELS, blank=False, null=False)
     estimated_completion_time = models.PositiveIntegerField(
         help_text="Estimated completion time in minutes",
-        null=True,
-        blank=True
+        blank = False,
+        null = False
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=DRAFT)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="courses", null=True)
@@ -53,12 +52,6 @@ class Course(models.Model):
         if not self.slug:
             self.slug = slugify(self.title)
 
-        original_slug = self.slug
-        counter = 1
-        while Course.objects.filter(slug=self.slug).exists():
-            self.slug = f"{original_slug}-{counter}"
-            counter += 1
-
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -67,15 +60,8 @@ class Course(models.Model):
 
 class Section(models.Model):
     course: 'Course' = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="sections")
-    order = models.PositiveIntegerField(editable=False)
-
-    class Meta:
-        ordering = ["order"]
-
-    def save(self, *args, **kwargs):
-        if self.order is None:
-            self.order = self.course.sections.count() + 1
-        super().save(*args, **kwargs)
+    title = models.CharField(max_length=255, blank=False, null=False)
+    order = models.PositiveIntegerField(default=0)
 
     def __str__(self) -> str:
         return f"Section {self.order} of {self.course.title}"
@@ -97,17 +83,9 @@ class Content(models.Model):
     text_content = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to=content_upload_path, blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True, null=True)
-    video = models.FileField(upload_to=content_upload_path, blank=True, null=True)
+    video_url = models.URLField(blank=True, null=True)
     video_transcription = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ["order"]
-
-    def save(self, *args, **kwargs):
-        if self.order is None:
-            self.order = self.section.contents.count() + 1
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.content_type.capitalize()} Content in Section {self.section.id}"
@@ -117,25 +95,15 @@ class Content(models.Model):
         if self.image:
             if os.path.isfile(self.image.path):
                 os.remove(self.image.path)
-        if self.video:
-            if os.path.isfile(self.video.path):
-                os.remove(self.video.path)
+
         super().delete(*args, **kwargs)
 
 
 class Quiz(models.Model):
     section: 'Section' = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="quizzes")
-    question: str = models.TextField()
-    correct_answer: str = models.TextField()
+    question: str = models.TextField(blank=True, null=True)
+    correct_answer: str = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ['order']
-
-    def save(self, *args, **kwargs):
-        if self.order is None:
-            self.order = self.section.contents.count() + 1
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Quiz {self.order} in Section {self.section.order}"

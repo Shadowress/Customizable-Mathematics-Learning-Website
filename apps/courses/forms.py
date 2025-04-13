@@ -1,5 +1,8 @@
+import re
+
 from django import forms
-from django.forms import inlineformset_factory
+from django.core.exceptions import ValidationError
+from django.forms import inlineformset_factory, TextInput
 
 from apps.courses.models import Course, Section, Content, Quiz
 
@@ -13,58 +16,93 @@ class CourseForm(forms.ModelForm):
 class SectionForm(forms.ModelForm):
     class Meta:
         model = Section
-        exclude = ['section_number', 'course']
+        fields = ['title', 'order']
+        widgets = {
+            'title': TextInput(attrs={'required': 'required'}),
+            'order': forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['title'].required = True
 
 
 class TextContentForm(forms.ModelForm):
+    section_order = forms.IntegerField(widget=forms.HiddenInput(), required=False, min_value=0)
+
     class Meta:
         model = Content
-        fields = ['content_type', 'text_content']
+        fields = ['content_type', 'text_content', 'order']
         widgets = {
-            'text_content': forms.Textarea(attrs={'placeholder': 'Enter your text content here...'})
+            'text_content': forms.Textarea(attrs={'placeholder': 'Enter your text content here...'}),
+            'order': forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.instance.pk:  # Ensure it's a new content object
-            self.fields['content_type'].initial = Content.TEXT  # Set default value to 'text'
-            self.fields['content_type'].widget = forms.HiddenInput()  # Hide the field so it's not editable
+        if not self.instance.pk:
+            self.fields['content_type'].initial = Content.TEXT
+            self.fields['content_type'].widget = forms.HiddenInput()
 
 
 class ImageContentForm(forms.ModelForm):
+    section_order = forms.IntegerField(widget=forms.HiddenInput(), required=False, min_value=0)
+
     class Meta:
         model = Content
-        fields = ['content_type', 'image', 'alt_text']
+        fields = ['content_type', 'image', 'alt_text', 'order']
         widgets = {
-            'alt_text': forms.TextInput(attrs={'placeholder': 'Alternative text for the image (optional)'})
+            'alt_text': forms.TextInput(attrs={'placeholder': 'Alternative text for the image (optional)'}),
+            'order': forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.instance.pk:  # Ensure it's a new content object
-            self.fields['content_type'].initial = Content.IMAGE  # Set default value to 'image'
-            self.fields['content_type'].widget = forms.HiddenInput()  # Hide the field so it's not editable
+        if not self.instance.pk:
+            self.fields['content_type'].initial = Content.IMAGE
+            self.fields['content_type'].widget = forms.HiddenInput()
 
 
 class VideoContentForm(forms.ModelForm):
+    section_order = forms.IntegerField(widget=forms.HiddenInput(), required=False, min_value=0)
+
     class Meta:
         model = Content
-        fields = ['content_type', 'video', 'video_transcription']
+        fields = ['content_type', 'video_url', 'video_transcription', 'order']
         widgets = {
-            'video_transcription': forms.Textarea(attrs={'placeholder': 'Transcription for the video (optional)'})
+            'video_url': forms.URLInput(
+                attrs={'placeholder': 'YouTube video URL', 'pattern': r'https?://(www\.)?(youtube\.com|youtu\.be)/.+',
+                       'title': 'Only YouTube URLs allowed'}
+            ),
+            'video_transcription': forms.Textarea(attrs={'placeholder': 'Transcription for the video'}),
+            'order': forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.instance.pk:  # Ensure it's a new content object
-            self.fields['content_type'].initial = Content.VIDEO  # Set default value to 'video'
-            self.fields['content_type'].widget = forms.HiddenInput()  # Hide the field so it's not editable
+        if not self.instance.pk:
+            self.fields['content_type'].initial = Content.VIDEO
+            self.fields['content_type'].widget = forms.HiddenInput()
+
+    def clean_video_url(self):
+        url = self.cleaned_data.get("video_url")
+        youtube_regex = re.compile(
+            r'^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$'
+        )
+        if url and not youtube_regex.match(url):
+            raise ValidationError("Only YouTube URLs are allowed.")
+        return url
 
 
 class QuizForm(forms.ModelForm):
+    section_order = forms.IntegerField(widget=forms.HiddenInput(), required=False, min_value=0)
+
     class Meta:
         model = Quiz
-        fields = ['question', 'correct_answer']
+        fields = ['question', 'correct_answer', 'order']
+        widgets = {
+            'order': forms.HiddenInput(),
+        }
 
 
 # Inline formset for Section and its contents (text, image, or video)
@@ -72,46 +110,38 @@ SectionFormSet = inlineformset_factory(
     Course,
     Section,
     form=SectionForm,
-    extra=1,
-    can_delete=True
+    extra=0,
+    can_delete=True,
 )
 
-TextContentInlineFormSet = inlineformset_factory(
+TextContentFormSet = inlineformset_factory(
     Section,
     Content,
     form=TextContentForm,
-    extra=1,
+    extra=0,
     can_delete=True,
-    min_num=1,
-    validate_min=True
 )
 
-ImageContentInlineFormSet = inlineformset_factory(
+ImageContentFormSet = inlineformset_factory(
     Section,
     Content,
     form=ImageContentForm,
-    extra=1,
+    extra=0,
     can_delete=True,
-    min_num=1,
-    validate_min=True
 )
 
-VideoContentInlineFormSet = inlineformset_factory(
+VideoContentFormSet = inlineformset_factory(
     Section,
     Content,
     form=VideoContentForm,
-    extra=1,
+    extra=0,
     can_delete=True,
-    min_num=1,
-    validate_min=True
 )
 
 QuizFormSet = inlineformset_factory(
     Section,
     Quiz,
     form=QuizForm,
-    extra=1,
+    extra=0,
     can_delete=True,
-    min_num=1,
-    validate_min=True
 )
