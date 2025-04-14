@@ -117,7 +117,6 @@ class Quiz(models.Model):
 class Answer(models.Model):
     user: 'CustomUser' = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="answers")
     quiz: 'Quiz' = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="answers")
-    answer: str = models.TextField()
 
     def __str__(self) -> str:
         return f"{self.user} answered {self.quiz}"

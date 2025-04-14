@@ -676,6 +676,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
+                const videoInputs = document.querySelectorAll('input[name$="-video_url"]');
+                videoInputs.forEach((input) => {
+                    const videoId = extractYouTubeVideoID(input.value);
+                    if (videoId) {
+                        input.value = `https://www.youtube.com/embed/${videoId}`;
+                    }
+                });
+
                 window.removeEventListener("beforeunload", beforeUnloadHandler);
                 mainForm.submit();
             }

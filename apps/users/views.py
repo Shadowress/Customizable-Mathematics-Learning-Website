@@ -12,6 +12,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import EmailMessage
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -323,8 +324,24 @@ def resend_password_reset_verification(request):
 # --- Dashboard Views ---
 @user_passes_test(normal_user_required, login_url="homepage")
 def dashboard(request) -> HTTPResponse:
-    courses = Course.objects.all()
-    return render(request, "dashboard/dashboard.html", {"normal_user_header_included": True, "courses": courses})
+    query = request.GET.get('q', '')
+    courses = Course.objects.filter(status='published')
+
+    if query:
+        courses = courses.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    return render(
+        request,
+        "dashboard/dashboard.html",
+        {
+            "normal_user_header_included": True,
+            "courses": courses,
+            "query": query
+        }
+    )
 
 
 @user_passes_test(normal_user_required, login_url="homepage")
@@ -368,15 +385,26 @@ def profile_picture_upload(request):
 
 @user_passes_test(content_manager_required, login_url="homepage")
 def content_manager_dashboard(request) -> HTTPResponse:
+    query = request.GET.get('q', '')
+
     published_courses = Course.objects.filter(status='published')
     draft_courses = Course.objects.filter(status='draft')
-    return render(request,
-                  "dashboard/content_manager_dashboard.html",
-                  {
-                      "content_manager_header_included": True,
-                      "published_courses": published_courses,
-                      "draft_courses": draft_courses,
-                  })
+
+    if query:
+        search_filter = Q(title__icontains=query) | Q(description__icontains=query)
+        published_courses = published_courses.filter(search_filter)
+        draft_courses = draft_courses.filter(search_filter)
+
+    return render(
+        request,
+        "dashboard/content_manager_dashboard.html",
+        {
+            "content_manager_header_included": True,
+            "published_courses": published_courses,
+            "draft_courses": draft_courses,
+            "query": query
+        }
+    )
 
 
 # --- Private Methods ---

@@ -5,7 +5,15 @@
 {% endblock %}
 
 {% block content %}
-    <p>Content Manager Dashboard</p>
+    <form method="GET" action="">
+        <input
+            type="text"
+            name="q"
+            placeholder="Search courses..."
+            value="{{ query|default:'' }}"
+        >
+        <button type="submit">Search</button>
+    </form>
 
     <a href="{% url 'create_course' %}"><button>Create New Course</button></a>
 
@@ -15,6 +23,7 @@
             <a href="{% url 'edit_course' course.slug %}">
                 <div style="cursor: pointer">
                     {{ course.title }} - {{ course.get_difficulty_display }}
+                    {{ course.description }}
                 </div>
             </a>
         {% empty %}

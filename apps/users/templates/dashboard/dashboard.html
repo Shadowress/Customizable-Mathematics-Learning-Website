@@ -7,13 +7,22 @@
 {% endblock %}
 
 {% block content %}
-    <p>Dashboard</p>
+    <form method="GET" action="">
+        <input
+            type="text"
+            name="q"
+            placeholder="Search courses..."
+            value="{{ query|default:'' }}"
+        >
+        <button type="submit">Search</button>
+    </form>
 
-    <h2>Available Courses</h2>
+    <h2>Courses</h2>
     <ul>
         {% for course in courses %}
             <li>
                 <a href="{% url 'course' course.slug %}">{{ course.title }}</a>
+                {{ course.description }}
                 ({{ course.get_difficulty_display }})
             </li>
         {% empty %}

@@ -1,9 +1,93 @@
 {% extends "base.html" %}
 
+{% load crispy_forms_tags %}
+{% load static %}
+
 {% block header %}
     {% include 'includes/normal_user_header.html' %}
 {% endblock %}
 
 {% block content %}
-    {{ course }}
+    <h1>{{ course.title }}</h1>
+    <p>{{ course.description }}</p>
+    <p><strong>Difficulty:</strong> {{ course.difficulty }}</p>
+    <p><strong>Estimated time:</strong> {{ course.estimated_completion_time }} minutes</p>
+
+    <hr>
+
+    {% for section in sections %}
+        <div class="section">
+            <div class="section-title">
+                <h2>Section {{ section.order|add:1 }}: {{ section.title }}</h2>
+            </div>
+
+            <div class="section-body">
+                {% for content in section.contents|dictsort:"order" %}
+                    {% if content.type == "text" %}
+                        <div class="content-block text-content">
+                            <p>{{ content.text_content }}</p>
+                        </div>
+                    {% elif content.type == "image" %}
+                        <div class="content-block image-content">
+                            <img src="{{ content.image }}" alt="{{ content.alt_text }}">
+                        </div>
+                    {% elif content.type == "video" %}
+                        <div class="content-block video-content">
+                            <iframe src="{{ content.video_url }}" frameborder="0" allowfullscreen></iframe>
+                            {% if content.video_transcription %}
+                                <details>
+                                    <summary>Video Transcription</summary>
+                                    <p>{{ content.video_transcription }}</p>
+                                </details>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Section Quizzes -->
+                {% if section.quizzes %}
+                    <div class="quiz-section">
+                        <h3>Quizzes</h3>
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            {% for quiz in section.quizzes|dictsort:"order" %}
+                                <div class="quiz-block">
+                                    <p><strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}</p>
+
+                                    {% if quiz.show_answer %}
+                                        <p class="quiz-answer">Answer: {{ quiz.placeholder }}</p>
+                                    {% else %}
+                                        <form method="POST" action="">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+                                            <input
+                                                type="text"
+                                                name="answer"
+                                                placeholder="{{ quiz.placeholder }}"
+                                                class="quiz-input"
+                                                required
+                                            >
+                                            <button type="submit">Submit</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+
+    {% if messages %}
+        <ul class="feedback-messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'js/course.js' %}"></script>
 {% endblock %}
