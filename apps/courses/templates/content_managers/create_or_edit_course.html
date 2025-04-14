@@ -15,12 +15,26 @@
 {% endblock %}
 
 {% block content %}
-    <form method="POST" enctype="multipart/form-data">
+    <form id="main-course-form" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ course_form|crispy }}
 
-        <button type="submit" name="action" value="save_draft">Save Course</button>
-        <button type="submit" name="action" value="publish">Publish Course</button>
+        {% if mode == "create" %}
+            <button type="submit" name="action" value="save_draft">Save as Draft</button>
+            <button type="submit" name="action" value="publish">Publish</button>
+
+        {% elif mode == "edit_draft" %}
+            <button type="submit" name="action" value="save_draft">Save</button>
+            <button type="submit" name="action" value="publish">Publish</button>
+            <button type="submit" name="action" value="delete_course" class="btn btn-danger">Delete Draft</button>
+
+        {% elif mode == "edit_published" %}
+            <button type="submit" name="action" value="save_draft">Unpublish</button>
+            <button type="submit" name="action" value="publish">Make Changes</button>
+            <button type="submit" name="action" value="delete_course" class="btn btn-danger">Delete Course</button>
+        {% endif %}
+
+        <input type="hidden" name="action" id="form-action">
 
         {{ section_formset.management_form }}
         {{ text_content_formset.management_form }}
@@ -77,6 +91,8 @@
     <!-- Hidden template for empty image content form -->
     <div id="empty-image-content-form" style="display: none;">
         <div class="image-content-form">
+            <img src="" alt="Image preview" class="image-preview" style="display: none; max-width: 100%; height: auto;" />
+
             {{ image_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Image</button>
         </div>
@@ -85,6 +101,13 @@
     <!-- Hidden template for empty video content form -->
     <div id="empty-video-content-form" style="display: none;">
         <div class="video-content-form">
+            <iframe
+                class="video-preview"
+                style="display: none; width: 100%; max-width: 560px; height: 315px;"
+                frameborder="0"
+                allowfullscreen>
+            </iframe>
+
             {{ video_content_formset.empty_form|crispy }}
             <button type="button" class="remove-content btn btn-danger">Remove Video</button>
         </div>

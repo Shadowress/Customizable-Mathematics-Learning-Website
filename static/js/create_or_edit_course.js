@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const addQuizBtn = document.getElementById("add-quiz-btn");
 
     let currentSection = null;
-    let isDirty = false;
 
     function setActiveSection(section) {
         currentSection = section;
@@ -217,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 orderInput.value = order;
             }
 
-            // Update title (optional)
+            // Update title
             if (titleSelector) {
                 const title = item.querySelector(titleSelector);
                 if (title) {
@@ -314,16 +313,36 @@ document.addEventListener("DOMContentLoaded", function () {
                     const imagePreview = formElement.querySelector('img.image-preview');
                     const imageInput = formElement.querySelector('input[type="file"][name$="-image"]');
                     const altInput = formElement.querySelector('input[name$="-alt_text"]');
-                    if (imagePreview && data.image_url) imagePreview.src = data.image_url;
-                    if (altInput) altInput.value = data.alt_text || "";
-                    // todo Leave imageInput alone – file inputs can't be pre-filled
+
+                    if (imagePreview && data.image) {
+                        imagePreview.src = data.image;
+                        imagePreview.alt = data.alt_text || "Image preview";
+                        imagePreview.style.display = 'block';
+                    }
+
+                    if (altInput) {
+                        altInput.value = data.alt_text || "";
+                    }
                     break;
 
                 case "video":
-                    const videoInput = formElement.querySelector('input[type="url"][name$="-video"]');
+                    const videoInput = formElement.querySelector('input[type="url"][name$="-video_url"]');
                     const transcriptInput = formElement.querySelector('textarea[name$="-video_transcription"]');
-                    if (videoInput) videoInput.value = data.video || "";
+                    const videoPreview = formElement.querySelector('iframe.video-preview');
+
+                    if (videoInput) videoInput.value = data.video_url || "";
                     if (transcriptInput) transcriptInput.value = data.video_transcription || "";
+
+                    if (videoPreview && data.video_url) {
+                        const videoId = extractYouTubeVideoID(data.video_url);
+                        if (videoId) {
+                            videoPreview.src = `https://www.youtube.com/embed/${videoId}`;
+                            videoPreview.style.display = 'block';
+                        } else {
+                            videoPreview.src = '';
+                            videoPreview.style.display = 'none';
+                        }
+                    }
                     break;
 
                 case "quiz":
@@ -338,15 +357,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function isElementVisible(el) {
-        return !!(el.offsetParent || el.closest("[style*='display: none']") === null);
-    }
-
-    function beforeUnloadHandler(e) {
-        if (isDirty) {
-            e.preventDefault();
-            e.returnValue = "";
-        }
+    function extractYouTubeVideoID(url) {
+        const match = url.match(
+            /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/
+        );
+        return match ? match[1] : null;
     }
 
     function validateCourseBeforeSave() {
@@ -358,6 +373,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         for (let i = 0; i < sectionForms.length; i++) {
             const section = sectionForms[i];
+            console.log(sectionForms);
             const sectionNumber = i + 1;
 
             if (!hasValidContent(section)) {
@@ -386,6 +402,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function getValidSections() {
         return Array.from(document.querySelectorAll(".section-form")).filter(section => {
+            if (section.closest("#empty-section-form")) return false;
+
             const deleteInput = section.querySelector("input[type='checkbox'][name$='-DELETE']");
             return !deleteInput || !deleteInput.checked;
         });
@@ -401,7 +419,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const contentTypes = ["text-content-form", "image-content-form", "video-content-form"];
 
         return contentTypes.some(className => {
-            return Array.from(contentContainer.querySelectorAll(`.${className}`)).some(el => !isDeleted(el));
+            return Array.from(contentContainer.querySelectorAll(`.${className}`)).some(el => {
+                if (isDeleted(el)) return false;
+                return !isInsideTemplate(el);
+            });
         });
     }
 
@@ -410,7 +431,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const contents = contentContainer.querySelectorAll(".text-content-form, .image-content-form, .video-content-form");
 
         for (const content of contents) {
-            if (isDeleted(content)) continue;
+            if (isDeleted(content) || isInsideTemplate(content)) continue;
             const inputs = content.querySelectorAll("input, textarea, select");
 
             for (const input of inputs) {
@@ -427,7 +448,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function hasValidQuiz(section) {
         const quizContainer = section.querySelector(".section-quizzes");
 
-        return Array.from(quizContainer.querySelectorAll(".quiz-form")).some(quiz => !isDeleted(quiz));
+        return Array.from(quizContainer.querySelectorAll(".quiz-form")).some(quiz => {
+            return !isDeleted(quiz) && !isInsideTemplate(quiz);
+        });
     }
 
     function allQuizFieldsFilled(section) {
@@ -435,7 +458,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const quizzes = quizContainer.querySelectorAll(".quiz-form");
 
         for (const quiz of quizzes) {
-            if (isDeleted(quiz)) continue;
+            if (isDeleted(quiz) || isInsideTemplate(quiz)) continue;
             const inputs = quiz.querySelectorAll("input, textarea, select");
 
             for (const input of inputs) {
@@ -449,6 +472,15 @@ document.addEventListener("DOMContentLoaded", function () {
         return true;
     }
 
+    function isInsideTemplate(element) {
+        return (
+            element.closest("#empty-text-content-form") ||
+            element.closest("#empty-image-content-form") ||
+            element.closest("#empty-video-content-form") ||
+            element.closest("#empty-quiz-form")
+        );
+    }
+
     function shouldValidateInput(input) {
         return (
             input.offsetParent !== null && // visible
@@ -456,6 +488,17 @@ document.addEventListener("DOMContentLoaded", function () {
             input.name &&
             !input.name.includes("-DELETE")
         );
+    }
+
+    function isElementVisible(el) {
+        return !!(el.offsetParent || el.closest("[style*='display: none']") === null);
+    }
+
+    function beforeUnloadHandler(e) {
+        if (isDirty && !isSubmitting) {
+            e.preventDefault();
+            e.returnValue = "";
+        }
     }
 
     // === Set Current Active Section on Click ===
@@ -504,6 +547,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 deleteContentOrQuiz(quizDiv);
             }
             updateQuizOrder();
+        }
+    });
+
+    // === Update Image Preview ===
+    document.body.addEventListener('change', function (event) {
+        const input = event.target;
+
+        if (
+            input.type === 'file' &&
+            input.name.endsWith('-image') &&
+            input.closest('.image-content-form')
+        ) {
+            const formElement = input.closest('.image-content-form');
+            const previewImg = formElement.querySelector('img.image-preview');
+
+            if (previewImg && input.files && input.files[0]) {
+                const file = input.files[0];
+                previewImg.src = URL.createObjectURL(file);
+                previewImg.alt = file.name;
+                previewImg.style.display = 'block';
+            }
         }
     });
 
@@ -559,55 +623,75 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // === Check Changes When User Exit ===
-    document.querySelectorAll("form input, form textarea, form select").forEach(el => {
+    let isDirty = false;
+    let isSubmitting = false;
+
+    const mainForm = document.querySelector("#main-course-form"); // Add an ID to your main form
+
+    // === Track Dirty Changes in the Main Form ===
+    mainForm.querySelectorAll("input, textarea, select").forEach((el) => {
         el.addEventListener("input", () => {
-            if (isElementVisible(el)) {
-                if (el.value.trim() !== "") {
-                    isDirty = true;
-                }
+            if (el.value.trim() !== "") {
+                isDirty = true;
             }
         });
-
         el.addEventListener("change", () => {
-            if (isElementVisible(el)) {
-                if (el.value.trim() !== "") {
-                    isDirty = true;
-                }
+            if (el.value.trim() !== "") {
+                isDirty = true;
             }
         });
     });
 
-    const observer = new MutationObserver(() => {
-        isDirty = true;
+    // === Set isSubmitting When Clicking Submit Buttons for Main Form ===
+    document.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const form = btn.closest("form");
+            const name = btn.getAttribute("name");
+            const value = btn.getAttribute("value");
+
+            if (form === mainForm && name === "action" && (value === "publish" || value === "save_draft")) {
+                isSubmitting = true;
+            }
+        });
     });
 
-    observer.observe(document.getElementById("sections"), {
-        childList: true,
-        subtree: true
-    });
+    // === Handle Main Form Submission with Validation ===
+    mainForm.addEventListener("submit", function (e) {
+        const activeEl = document.activeElement;
+        const name = activeEl?.getAttribute("name");
+        const value = activeEl?.getAttribute("value");
 
-    window.addEventListener("beforeunload", beforeUnloadHandler);
+        if (name === "action") {
+            // Set the hidden input's value
+            document.getElementById("form-action").value = value;
 
-    // === Check Course Structure Before Saving ===
-    const form = document.querySelector("form");
-
-    form.addEventListener("submit", function (e) {
-        const submitter = e.submitter;
-
-        if (!submitter) return;
-
-        const isPublish = submitter.name === "action" && submitter.value === "publish";
-        const isDraft = submitter.name === "action" && submitter.value === "save_draft";
-
-        if (isPublish) {
-            const isValid = validateCourseBeforeSave();
-            if (!isValid) {
+            if (value === "publish" || value === "save_draft") {
                 e.preventDefault();
-                return;
+
+                if (value === "publish") {
+                    const isValid = validateCourseBeforeSave();
+                    if (!isValid) {
+                        isSubmitting = false;
+                        return;
+                    }
+                }
+
+                window.removeEventListener("beforeunload", beforeUnloadHandler);
+                mainForm.submit();
+            }
+
+            else if (value === "delete_course") {
+                const confirmed = confirm("Are you sure you want to delete this course? This action cannot be undone.");
+                if (!confirmed) {
+                    e.preventDefault();
+                    return;
+                }
+
+                window.removeEventListener("beforeunload", beforeUnloadHandler);
             }
         }
-
-        window.removeEventListener("beforeunload", beforeUnloadHandler);
     });
+
+    // === Warn User Before Unload if Unsaved Changes Exist ===
+    window.addEventListener("beforeunload", beforeUnloadHandler);
 });

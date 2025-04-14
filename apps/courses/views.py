@@ -16,7 +16,24 @@ from .forms import SectionFormSet, QuizFormSet
 # --- Normal User ---
 @user_passes_test(normal_user_required, login_url="homepage")
 def course(request, slug):
-    course = get_object_or_404(Course, slug=slug, status='published')
+    course = get_object_or_404(Course, slug=slug)
+    sections = Section.objects.filter(course=course).order_by('order')
+    section_data = []
+    for section in sections:
+        section_content = {
+            'section': section,
+            'text_contents': Content.objects.filter(section=section).order_by('order'),
+            'image_contents': Content.objects.filter(section=section).order_by('order'),
+            'video_contents': Content.objects.filter(section=section).order_by('order'),
+            'quizzes': Quiz.objects.filter(section=section).order_by('order')
+        }
+        section_data.append(section_content)
+
+    context = {
+        'course': course,
+        'sections': section_data
+    }
+
     return render(request, "normal_users/course.html", {"course": course})
 
 
@@ -25,9 +42,14 @@ def course(request, slug):
 def create_or_edit_course(request, slug=None):
     if slug:
         course = get_object_or_404(Course, slug=slug, created_by=request.user)
+        if course.status == "draft":
+            mode = "edit_draft"
+        else:
+            mode = "edit_published"
 
     else:
         course = None
+        mode = "create"
 
     section_prefix = "section"
     text_content_prefix = "text_content"
@@ -46,6 +68,7 @@ def create_or_edit_course(request, slug=None):
             )
             image_content_formset = ImageContentFormSet(
                 request.POST,
+                request.FILES,
                 queryset=Content.objects.filter(section__course=course),
                 prefix=image_content_prefix
             )
@@ -60,6 +83,44 @@ def create_or_edit_course(request, slug=None):
                 prefix=quiz_prefix
             )
 
+            FIELD_WHITELISTS = {
+                "section": ["id", "title", "order"],
+                "text": ["id", "content_type", "text_content", "order", "section_order"],
+                "image": ["id", "content_type", "alt_text", "order", "section_order"],
+                "video": ["id", "content_type", "video_url", "video_transcription", "order", "section_order"],
+                "quiz": ["id", "question", "correct_answer", "order", "section_order"],
+            }
+
+            serialized_sections = _serialize_json_safe([
+                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["section"])
+                for form in section_formset.forms
+                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["section"])
+            ])
+
+            serialized_text_contents = _serialize_json_safe([
+                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["text"])
+                for form in text_content_formset.forms
+                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["text"])
+            ])
+
+            serialized_image_contents = _serialize_json_safe([
+                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["image"])
+                for form in image_content_formset.forms
+                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["image"])
+            ])
+
+            serialized_video_contents = _serialize_json_safe([
+                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["video"])
+                for form in video_content_formset.forms
+                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["video"])
+            ])
+
+            serialized_quizzes = _serialize_json_safe([
+                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["quiz"])
+                for form in quiz_formset.forms
+                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["quiz"])
+            ])
+
             if all([
                 course_form.is_valid(),
                 section_formset.is_valid(),
@@ -73,8 +134,13 @@ def create_or_edit_course(request, slug=None):
                 action = request.POST.get("action")
                 if action == "publish":
                     course.status = Course.PUBLISHED
-                else:
+
+                elif action == "save_draft":
                     course.status = Course.DRAFT
+
+                elif action == "delete_course":
+                    course.delete()
+                    return redirect("content_manager_dashboard")
 
                 course.created_by = request.user
                 course.save()
@@ -118,11 +184,6 @@ def create_or_edit_course(request, slug=None):
 
     else:
         course_form = CourseForm(instance=course) if course else CourseForm()
-        section_formset = SectionFormSet(prefix=section_prefix)
-        text_content_formset = TextContentFormSet(prefix=text_content_prefix)
-        image_content_formset = ImageContentFormSet(prefix=image_content_prefix)
-        video_content_formset = VideoContentFormSet(prefix=video_content_prefix)
-        quiz_formset = QuizFormSet(prefix=quiz_prefix)
 
         serialized_sections = _serialize_json_safe(
             _serialize_section_formset(
@@ -184,15 +245,23 @@ def create_or_edit_course(request, slug=None):
 
             serialized_quizzes.extend(_serialize_quiz_formset(quiz_formset_data))
 
-        serialized_text_contents = _serialize_json_safe(serialized_text_contents)
-        serialized_image_contents = _serialize_json_safe(serialized_image_contents)
-        serialized_video_contents = _serialize_json_safe(serialized_video_contents)
-        serialized_quizzes = _serialize_json_safe(serialized_quizzes)
+            serialized_text_contents = _serialize_json_safe(serialized_text_contents)
+            serialized_image_contents = _serialize_json_safe(serialized_image_contents)
+            serialized_video_contents = _serialize_json_safe(serialized_video_contents)
+            serialized_quizzes = _serialize_json_safe(serialized_quizzes)
+
+    section_formset = SectionFormSet(prefix=section_prefix)
+    text_content_formset = TextContentFormSet(prefix=text_content_prefix)
+    image_content_formset = ImageContentFormSet(prefix=image_content_prefix)
+    video_content_formset = VideoContentFormSet(prefix=video_content_prefix)
+    quiz_formset = QuizFormSet(prefix=quiz_prefix)
 
     return render(
         request,
         "content_managers/create_or_edit_course.html",
         {
+            "mode": mode,
+
             "course_form": course_form,
             "section_formset": section_formset,
             "text_content_formset": text_content_formset,
@@ -266,6 +335,36 @@ def _save_content_and_quiz_formset(formset, section_lookup, content_type=None):
 
 def _serialize_json_safe(data):
     return mark_safe(json.dumps(data))
+
+
+def _clean_for_json(data, allowed_fields=None):
+    """Return a cleaned dict with only allowed fields and convert values to JSON-serializable types."""
+    if not isinstance(data, dict):
+        return {}
+
+    cleaned = {}
+    for key in allowed_fields or data.keys():
+        value = data.get(key)
+
+        # Handle model instances (e.g. Section or Course)
+        if hasattr(value, 'pk'):
+            cleaned[key] = value.pk
+
+        # Handle UploadedFile/FileField/ImageField
+        elif hasattr(value, 'url'):
+            cleaned[key] = value.url
+
+        # Handle everything else (assume JSON-serializable)
+        else:
+            cleaned[key] = value
+
+    return cleaned
+
+
+def _form_has_non_empty_fields(form, whitelist):
+    """Returns True if the form has at least one non-empty whitelisted field."""
+    data = form.cleaned_data if form.is_valid() else form.data
+    return any(data.get(field) not in [None, '', False] for field in whitelist)
 
 
 def _serialize_section_formset(section_formset):

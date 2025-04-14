@@ -9,7 +9,12 @@ from apps.users.models import CustomUser
 # Create your models here.
 def content_upload_path(instance, filename):
     """Dynamically generate file path for storing course media."""
-    return f"courses/{instance.section.course.id}/section_{instance.section.id}/{filename}"
+    return os.path.join(
+        "courses",
+        str(instance.section.course.id),
+        f"section_{instance.section.id}",
+        filename
+    )
 
 
 class Course(models.Model):
@@ -37,8 +42,8 @@ class Course(models.Model):
     difficulty: str = models.CharField(max_length=15, choices=DIFFICULTY_LEVELS, blank=False, null=False)
     estimated_completion_time = models.PositiveIntegerField(
         help_text="Estimated completion time in minutes",
-        blank = False,
-        null = False
+        blank=False,
+        null=False
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=DRAFT)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="courses", null=True)
