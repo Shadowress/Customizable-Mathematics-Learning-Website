@@ -1,39 +1,86 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("accessibility-btn");
-    const menu = document.getElementById("accessibility-menu");
+document.addEventListener('DOMContentLoaded', function () {
+    const darkToggle = document.getElementById('dark-mode-toggle');
+    const fontSizeInput = document.getElementById('font-size-input');
+    const spacingInput = document.getElementById('spacing-input');
+    const themeSelect = document.getElementById('color-theme');
 
-    // Toggle menu on button click
-    btn.addEventListener("click", function () {
-        const isExpanded = btn.getAttribute("aria-expanded") === "true";
-        btn.setAttribute("aria-expanded", !isExpanded);
-        menu.classList.toggle("show");
-    });
+    const FONT_MIN = 14;
+    const FONT_MAX = 24;
+    const SPACING_MIN = 1;
+    const SPACING_MAX = 3;
 
-    // Close menu if clicked outside
-    document.addEventListener("click", function (event) {
-        if (!btn.contains(event.target) && !menu.contains(event.target)) {
-            menu.classList.remove("show");
-            btn.setAttribute("aria-expanded", "false");
+    // Load saved settings
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        darkToggle.classList.add('active');
+    }
+
+    if (localStorage.getItem('userFontSize')) {
+        const size = parseInt(localStorage.getItem('userFontSize'));
+        document.documentElement.style.setProperty('--user-font-size', size + 'px');
+        fontSizeInput.value = size;
+    }
+
+    if (localStorage.getItem('userSpacing')) {
+        const spacing = parseFloat(localStorage.getItem('userSpacing'));
+        document.documentElement.style.setProperty('--user-spacing', spacing);
+        spacingInput.value = spacing;
+    }
+
+    if (localStorage.getItem('colorTheme')) {
+        applyColorTheme(localStorage.getItem('colorTheme'));
+        themeSelect.value = localStorage.getItem('colorTheme');
+    }
+
+    // Dark mode toggle
+    darkToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('darkMode', 'false');
+            darkToggle.classList.remove('active');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('darkMode', 'true');
+            darkToggle.classList.add('active');
         }
     });
 
-    // Dark mode toggle
-    document.getElementById("dark-mode-toggle").addEventListener("change", function () {
-        document.body.classList.toggle("dark-mode", this.checked);
+    // Font size update
+    fontSizeInput.addEventListener('input', () => {
+        let size = parseInt(fontSizeInput.value);
+        size = Math.max(FONT_MIN, Math.min(FONT_MAX, size));
+        fontSizeInput.value = size;
+        document.documentElement.style.setProperty('--user-font-size', size + 'px');
+        localStorage.setItem('userFontSize', size);
     });
 
-    // Color theme change
-    document.getElementById("color-theme").addEventListener("change", function () {
-        document.documentElement.style.setProperty("--secondary-color", this.value);
+    // Text spacing update
+    spacingInput.addEventListener('input', () => {
+        let spacing = parseFloat(spacingInput.value);
+        spacing = Math.max(SPACING_MIN, Math.min(SPACING_MAX, spacing));
+        spacingInput.value = spacing;
+        document.documentElement.style.setProperty('--user-spacing', spacing);
+        localStorage.setItem('userSpacing', spacing);
     });
 
-    // Font size change
-    document.getElementById("font-size").addEventListener("input", function () {
-        document.documentElement.style.setProperty("--font-size", `${this.value}px`);
+    // Color theme update
+    themeSelect.addEventListener('change', () => {
+        const theme = themeSelect.value;
+        applyColorTheme(theme);
+        localStorage.setItem('colorTheme', theme);
     });
 
-    // Spacing change
-    document.getElementById("spacing").addEventListener("input", function () {
-        document.documentElement.style.setProperty("--line-spacing", `${this.value}em`);
-    });
+    // 🔵 Only modify the secondary color
+    function applyColorTheme(theme) {
+        const secondaryColors = {
+            default: '#f8f9fa',   // Bootstrap default secondary
+            blue: '#0dcaf0',
+            green: '#198754',
+            purple: '#6f42c1'
+        };
+
+        const color = secondaryColors[theme] || secondaryColors['default'];
+        document.documentElement.style.setProperty('--secondary-color', color);
+    }
 });

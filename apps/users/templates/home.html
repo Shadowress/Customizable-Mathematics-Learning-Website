@@ -1,5 +1,32 @@
 {% extends "base.html" %}
 
+{% load static %}
+
+{% block title %}
+<!-- todo change to name -->
+Customizable Mathematics Learning Platform
+{% endblock %}
+
 {% block content %}
-    <a href="{% url 'login' %}">Login</a>
+    <div class="container py-5 text-center">
+        <!-- Project Logo or Title -->
+        <img src="{% static 'img/logo.png' %}" alt="Project Logo" class="mb-4" style="max-width: 150px;">
+
+        <h1 class="display-5 fw-bold mb-3">Accessible Mathematics Learning</h1>
+        <p class="lead mb-4">
+            A customizable e-learning platform empowering students with hearing disabilities to explore mathematics in a more inclusive and engaging way.
+        </p>
+
+        <!-- Collaborators Section -->
+        <div class="mb-4">
+            <p class="mb-2">In collaboration with:</p>
+            <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap">
+                <img src="{% static 'img/ams_logo.png' %}" alt="AMS Logo" height="100">
+                <img src="{% static 'img/asha_logo.png' %}" alt="ASHA Logo" height="100">
+            </div>
+        </div>
+
+        <!-- Login CTA -->
+        <a href="{% url 'login' %}" class="btn btn-primary btn-lg mt-3 text-decoration-none">Log In to Learn</a>
+    </div>
 {% endblock %}

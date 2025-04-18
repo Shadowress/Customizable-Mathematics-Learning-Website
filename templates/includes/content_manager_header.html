@@ -1,4 +1,16 @@
-<form action="{% url 'logout' %}" method="post">
-    {% csrf_token %}
-    <button type="submit">Log Out</button>
-</form>
+{% load static %}
+
+<header class="d-flex justify-content-between align-items-center px-4 py-3 bg-light shadow-sm">
+    <!-- Left: Logo (clickable to go to dashboard) -->
+    <a href="{% url 'content_manager_dashboard' %}" class="text-decoration-none d-flex align-items-center gap-2" title="Go to Dashboard">
+        <img src="{% static 'img/logo.png' %}" alt="Go to Dashboard" style="height: 40px; cursor: pointer;">
+    </a>
+
+    <!-- Right: Logout Button -->
+    <form action="{% url 'logout' %}" method="post" class="mb-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">
+            Log Out
+        </button>
+    </form>
+</header>

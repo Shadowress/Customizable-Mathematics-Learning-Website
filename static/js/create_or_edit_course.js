@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function (e) {
     const sectionContainer = document.getElementById("sections");
     const addSectionBtn = document.getElementById("add-section-btn");
     const addTextBtn = document.getElementById("add-text-btn");
@@ -364,6 +364,64 @@ document.addEventListener("DOMContentLoaded", function () {
         return match ? match[1] : null;
     }
 
+    function handleVideoTranscription(videoForm) {
+        if (!videoForm) {
+            console.error("Video form not found");
+            return;
+        }
+
+        const videoInput = videoForm.querySelector('input[type="url"][name$="-video_url"]');
+        const transcriptInput = videoForm.querySelector('textarea[name$="-video_transcription"]');
+
+        if (!videoInput) {
+            alert("Video URL input not found.");
+            return;
+        }
+
+        const videoURL = videoInput.value.trim();
+        if (!videoURL) {
+            alert("Please enter a YouTube video URL first.");
+            return;
+        }
+
+        // Show loading spinner/modal while transcribing
+        const spinner = document.getElementById("transcription-spinner"); // Optional
+        if (spinner) spinner.style.display = "block";
+
+        // Send to backend
+        fetch("/courses/transcribe-video/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": getCSRFToken(),
+            },
+            body: new URLSearchParams({
+                video_url: videoURL,
+            }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (spinner) spinner.style.display = "none";
+
+            if (data.status === "success") {
+                transcriptInput.value = data.transcription;
+                alert("Transcription complete!");
+            } else {
+                alert("Transcription failed: " + data.message);
+            }
+        })
+        .catch((error) => {
+            if (spinner) spinner.style.display = "none";
+            console.error("Transcription error:", error);
+            alert("An error occurred while transcribing the video.");
+        });
+    }
+
+    function getCSRFToken() {
+        const cookie = document.cookie.match(/csrftoken=([^;]+)/);
+        return cookie ? cookie[1] : "";
+    }
+
     function validateCourseBeforeSave() {
         const sectionForms = getValidSections();
         if (sectionForms.length === 0) {
@@ -622,6 +680,15 @@ document.addEventListener("DOMContentLoaded", function () {
             setActiveSection(firstSection);
         }
     }
+
+    // === Video Transcription ===
+    document.addEventListener("click", function(e) {
+        if (e.target && e.target.classList.contains("transcribe-video")) {
+            const videoForm = e.target.closest(".video-content-form");
+            console.log(videoForm); // todo
+            handleVideoTranscription(videoForm);
+        }
+    });
 
     let isDirty = false;
     let isSubmitting = false;

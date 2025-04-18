@@ -7,17 +7,31 @@ Verify Your Email
 {% endblock %}
 
 {% block content %}
-    <h2>Verify Your Email</h2>
-    <p>A verification email has been sent to your inbox. Please check your email (Check spam folder too).</p>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card shadow p-4" style="max-width: 500px; width: 100%;">
+            <h2 class="text-center mb-3">Verify Your Email</h2>
 
-    <p>Waiting for verification...</p>
+            <p class="text-muted text-center">
+                A verification email has been sent to your inbox.
+                <br>Make sure to check your spam folder as well.
+            </p>
 
-    <button onclick="resendEmail()">Resend Email</button>
+            <div class="text-center mt-4">
+                <p><strong>Waiting for verification...</strong></p>
 
-    <form action="{% url 'logout' %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Log Out</button>
-    </form>
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button onclick="resendEmail()" class="btn btn-outline-primary">
+                        Resend Email
+                    </button>
+
+                    <form action="{% url 'logout' %}" method="post" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">Log Out</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}

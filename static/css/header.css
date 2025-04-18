@@ -1,38 +1,43 @@
-header {
-    position: relative;
-    padding: 10px;
-    background: #f4f4f4;
+/* Wider dropdown */
+#accessibility-menu {
+    width: 380px !important; /* Forcefully increase width */
+    border-radius: 16px;
+    background-color: #fff;
 }
 
-/* Hide dropdown menu by default */
-.dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+/* Accessibility dropdown animation */
+.animate-accessibility {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-/* Show dropdown when "show" class is added */
-.dropdown-menu.show {
-    display: block;
+/* When dropdown is shown */
+.dropdown.show .animate-accessibility {
+    opacity: 1;
+    transform: translateY(0);
 }
 
-/* Style for the accessibility button */
-#accessibility-btn {
-    background-color: #007bff;
+/* Form elements spacing & look */
+#accessibility-menu .form-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+#accessibility-menu .form-control,
+#accessibility-menu .form-select {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+/* Toggle button */
+#dark-mode-toggle {
+    font-size: 0.85rem;
+    transition: background-color 0.3s ease;
+}
+
+#dark-mode-toggle:hover {
+    background-color: #343a40;
     color: white;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-#accessibility-btn:hover {
-    background-color: #0056b3;
 }

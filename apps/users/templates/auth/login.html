@@ -4,27 +4,47 @@
 {% load crispy_forms_tags %}
 {% load socialaccount %}
 
+{% block title %}
+Login
+{% endblock %}
+
 {% block content %}
-    {% if messages %}
-        <div class="alert alert-danger">
-            <ul style="margin-bottom: 0px">
-                {% for message in messages %}
-                    <li>{{ message }}</li>
-                {% endfor %}
-            </ul>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card shadow p-4" style="max-width: 500px; width: 100%;">
+            <h2 class="mb-4 text-center">Welcome Back</h2>
+
+            {% if messages %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="d-flex justify-content-between align-items-center my-2">
+                    <a href="{% url 'password_reset' %}">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+
+            <div class="text-center my-3">
+                <p class="mb-2">or login using</p>
+                <a href="{% provider_login_url 'google' method='redirect' %}">
+                    <img src="{% static 'img/google.png' %}" alt="Google Login"
+                         class="img-fluid" style="max-width: 50px;">
+                </a>
+            </div>
+
+            <p class="text-center mt-3">
+                Don’t have an account? <a href="{% url 'signup' %}">Sign up here</a>
+            </p>
         </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <a href="{% url 'password_reset' %}">Forgot Password?</a><br>
-        <button type="submit">Login</button>
-    </form>
-
-    <a href="{% provider_login_url 'google' method='redirect' %}">
-        <img style="width:500px" src="{% static 'img/google.png' %}" alt="Google Login">
-    </a>
-
-    <p>Don't have an account? Click <a href="{% url 'signup' %}">here</a> to sign up</p>
+    </div>
 {% endblock %}

@@ -38,5 +38,27 @@ document.addEventListener("DOMContentLoaded", () => {
             body.style.display = "block";
             currentActiveSection = section;
         });
+    });``
+
+    // Open transcription
+    document.querySelectorAll('.transcription-toggle-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const targetId = this.dataset.target;
+            const panel = document.getElementById(targetId);
+            if (panel) {
+                panel.classList.add('open');
+            }
+        });
+    });
+
+    // Close transcription
+    document.querySelectorAll('.transcription-close-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const targetId = this.dataset.target;
+            const panel = document.getElementById(targetId);
+            if (panel) {
+                panel.classList.remove('open');
+            }
+        });
     });
 });

@@ -1,0 +1,18 @@
+.profile-container {
+    position: relative;
+    padding: 2rem;
+}
+
+#edit-btn {
+    position: absolute;
+    top: 2.5rem;        /* moved down */
+    right: 2.5rem;      /* moved left */
+    width: 50px;        /* increased size */
+    height: 50px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#edit-btn:hover {
+    transform: scale(1.1);
+}

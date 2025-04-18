@@ -325,13 +325,29 @@ def resend_password_reset_verification(request):
 @user_passes_test(normal_user_required, login_url="homepage")
 def dashboard(request) -> HTTPResponse:
     query = request.GET.get('q', '')
-    courses = Course.objects.filter(status='published')
+    saved_only = request.GET.get('saved_only') == 'true'
+    courses_qs = Course.objects.filter(status='published')
 
     if query:
-        courses = courses.filter(
+        courses_qs = courses_qs.filter(
             Q(title__icontains=query) |
             Q(description__icontains=query)
         )
+
+    user_saved_courses = request.user.saved_courses.all()
+
+    if saved_only:
+        courses_qs = courses_qs.filter(id__in=user_saved_courses.values_list('id', flat=True))
+
+    courses = []
+    for course in courses_qs:
+        courses.append({
+            "title": course.title,
+            "description": course.description,
+            "slug": course.slug,
+            "difficulty": course.get_difficulty_display(),
+            "is_saved": course in user_saved_courses,
+        })
 
     return render(
         request,
@@ -339,7 +355,8 @@ def dashboard(request) -> HTTPResponse:
         {
             "normal_user_header_included": True,
             "courses": courses,
-            "query": query
+            "query": query,
+            "saved_only": saved_only,
         }
     )
 

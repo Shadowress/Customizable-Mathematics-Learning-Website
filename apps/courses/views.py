@@ -1,11 +1,16 @@
 import json
+import os
+import tempfile
 
-from django.contrib import messages
+import whisper
+import yt_dlp
 from django.contrib.auth.decorators import user_passes_test
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_POST
 
 from apps.courses.models import Course, Content, Quiz, Section, Answer
 from apps.users.permissions import normal_user_required, content_manager_required
@@ -17,38 +22,56 @@ from .forms import SectionFormSet, QuizFormSet
 # --- Normal User ---
 @user_passes_test(normal_user_required, login_url="homepage")
 def course(request, slug):
-    course = get_object_or_404(Course, slug=slug)
+    course_qs = get_object_or_404(Course, slug=slug)
     user = request.user
+    incorrect_feedback = {}
 
     if request.method == "POST":
-        # todo change out messages ltr
         quiz_id = request.POST.get("quiz_id")
         user_answer = request.POST.get("answer", "").strip().lower()
 
         try:
             quiz = Quiz.objects.get(id=quiz_id)
         except Quiz.DoesNotExist:
-            messages.error(request, "Invalid quiz.")
-            return redirect("course_view", slug=slug)
-
-        correct_answer = (quiz.correct_answer or "").strip().lower()
-
-        if user_answer == correct_answer:
-            Answer.objects.get_or_create(user=user, quiz=quiz)
-            messages.success(request, "Correct answer!")
+            incorrect_feedback = {
+                "quiz_id": quiz_id,
+                "message": "Invalid quiz.",
+            }
         else:
-            messages.error(request, "Incorrect answer.")
+            correct_answer = (quiz.correct_answer or "").strip().lower()
 
-    sections_qs = Section.objects.filter(course=course).order_by('order')
+            if user_answer == correct_answer:
+                Answer.objects.get_or_create(user=user, quiz=quiz)
+
+                course_quizzes = Quiz.objects.filter(section__course=quiz.section.course)
+                answered_quizzes = Answer.objects.filter(user=user, quiz__in=course_quizzes)
+
+                if answered_quizzes.count() == course_quizzes.count():
+                    user.completed_courses.add(quiz.section.course)
+            else:
+                incorrect_feedback = {
+                    "quiz_id": quiz.id,
+                    "message": "Incorrect answer.",
+                }
+
+    sections_qs = Section.objects.filter(course=course_qs).order_by('order')
+
+    is_saved = False
+    if request.user.is_authenticated:
+        is_saved = course_qs in request.user.saved_courses.all()
 
     course = {
-        "title": course.title,
-        "description": course.description,
-        "difficulty": course.difficulty,
-        "estimated_completion_time": course.estimated_completion_time,
+        "id": course_qs.id,
+        "title": course_qs.title,
+        "description": course_qs.description,
+        "difficulty": course_qs.difficulty,
+        "estimated_completion_time": course_qs.estimated_completion_time,
+        "is_saved": is_saved,
     }
 
     sections = []
+    video_transcriptions = {}
+
     for section in sections_qs:
         contents = []
         raw_contents = Content.objects.filter(section=section).order_by("order")
@@ -56,12 +79,14 @@ def course(request, slug):
         for content in raw_contents:
             if content.content_type == "text":
                 contents.append({
+                    "id": content.id,
                     "type": "text",
                     "text_content": content.text_content,
                     "order": content.order,
                 })
             elif content.content_type == "image":
                 contents.append({
+                    "id": content.id,
                     "type": "image",
                     "image": content.image.url if content.image else "",
                     "alt_text": content.alt_text,
@@ -69,11 +94,14 @@ def course(request, slug):
                 })
             elif content.content_type == "video":
                 contents.append({
+                    "id": content.id,
                     "type": "video",
                     "video_url": content.video_url,
-                    "video_transcription": content.video_transcription,
                     "order": content.order,
                 })
+
+                if content.video_transcription:
+                    video_transcriptions[content.id] = content.video_transcription
 
         quiz_data = []
         quizzes = Quiz.objects.filter(section=section).order_by("order")
@@ -102,7 +130,30 @@ def course(request, slug):
             "quizzes": quiz_data,
         })
 
-    return render(request, "normal_users/course.html", {"course": course, "sections": sections})
+    return render(
+        request,
+        "normal_users/course.html",
+        {
+            "normal_user_header_included": True,
+            "course": course,
+            "sections": sections,
+            "incorrect_feedback": incorrect_feedback,
+            "video_transcriptions": video_transcriptions
+        }
+    )
+
+
+@user_passes_test(normal_user_required, login_url="homepage")
+def toggle_save_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = request.user
+
+    if course in user.saved_courses.all():
+        user.saved_courses.remove(course)
+    else:
+        user.saved_courses.add(course)
+
+    return redirect('course', slug=course.slug)
 
 
 # --- Content Manager ---
@@ -344,6 +395,54 @@ def create_or_edit_course(request, slug=None):
             "existing_quizzes": serialized_quizzes,
         }
     )
+
+
+@require_POST
+def transcribe_video(request):
+    video_url = request.POST.get('video_url')
+
+    if not video_url:
+        return JsonResponse({'status': 'error', 'message': 'Missing video URL'}, status=400)
+
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            audio_path = os.path.join(temp_dir, "audio.wav")
+
+            # 1. Download and extract audio
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': os.path.join(temp_dir, 'audio.%(ext)s'),
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'wav',
+                    'preferredquality': '192',
+                }],
+                'quiet': True,
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([video_url])
+
+            # Find the audio file
+            for file in os.listdir(temp_dir):
+                if file.endswith(".wav"):
+                    audio_path = os.path.join(temp_dir, file)
+                    break
+
+            # 2. Transcribe audio using whisper
+            model = whisper.load_model("base")  # Or "tiny" for faster, lower accuracy
+            result = model.transcribe(audio_path)
+
+            transcription = result.get("text", "")
+
+            return JsonResponse({
+                'status': 'success',
+                'transcription': transcription,
+                'video_url': video_url,
+            })
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
 # --- Private Methods ---

@@ -3,11 +3,22 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    <h2>Enter a New Password</h2>
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="card shadow-sm p-4" style="max-width: 500px; width: 100%;">
+            <h2 class="text-center mb-3">Forgot Your Password?</h2>
+            <p class="text-center text-muted">Enter your email and we'll send you a link to reset your password.</p>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <button type="submit">Reset Password</button>
-    </form>
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-3">
+                    <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                </div>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'login' %}" class="text-decoration-none">Back to Login</a>
+            </div>
+        </div>
+    </div>
 {% endblock %}

@@ -57,6 +57,9 @@ class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=NORMAL_USER)
     is_verified = models.BooleanField(default=False)
 
+    saved_courses = models.ManyToManyField('courses.Course', related_name='saved_by', blank=True)
+    completed_courses = models.ManyToManyField('courses.Course', related_name='completed_by', blank=True)
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 

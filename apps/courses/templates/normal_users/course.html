@@ -3,89 +3,167 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
+{% block title %}
+Course
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/course.css' %}">
+{% endblock %}
+
 {% block header %}
     {% include 'includes/normal_user_header.html' %}
 {% endblock %}
 
 {% block content %}
-    <h1>{{ course.title }}</h1>
-    <p>{{ course.description }}</p>
-    <p><strong>Difficulty:</strong> {{ course.difficulty }}</p>
-    <p><strong>Estimated time:</strong> {{ course.estimated_completion_time }} minutes</p>
+    <!-- Course Display (Full Width) -->
+    <div class="course-display shadow-sm py-5 px-4 bg-light border-bottom">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div>
+                    <h1 class="fw-bold">{{ course.title }}</h1>
+                    <p class="text-muted fs-5">{{ course.description }}</p>
 
-    <hr>
+                    <!-- Difficulty Badge -->
+                    <span class="badge
+                        {% if course.difficulty == 'junior' %}
+                            bg-success
+                        {% elif course.difficulty == 'intermediate' %}
+                            bg-warning text-dark
+                        {% elif course.difficulty == 'advance' %}
+                            bg-danger
+                        {% else %}
+                            bg-secondary
+                        {% endif %}
+                        px-3 py-2 rounded-pill me-2"
+                    >
+                        {{ course.difficulty|title }}
+                    </span>
 
-    {% for section in sections %}
-        <div class="section">
-            <div class="section-title">
-                <h2>Section {{ section.order|add:1 }}: {{ section.title }}</h2>
-            </div>
+                    <!-- Estimated Time with Clock Icon -->
+                    <span class="text-secondary fs-6">
+                        <i class="bi bi-clock me-1"></i>{{ course.estimated_completion_time }} minutes
+                    </span>
+                </div>
 
-            <div class="section-body">
-                {% for content in section.contents|dictsort:"order" %}
-                    {% if content.type == "text" %}
-                        <div class="content-block text-content">
-                            <p>{{ content.text_content }}</p>
-                        </div>
-                    {% elif content.type == "image" %}
-                        <div class="content-block image-content">
-                            <img src="{{ content.image }}" alt="{{ content.alt_text }}">
-                        </div>
-                    {% elif content.type == "video" %}
-                        <div class="content-block video-content">
-                            <iframe src="{{ content.video_url }}" frameborder="0" allowfullscreen></iframe>
-                            {% if content.video_transcription %}
-                                <details>
-                                    <summary>Video Transcription</summary>
-                                    <p>{{ content.video_transcription }}</p>
-                                </details>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-
-                <!-- Section Quizzes -->
-                {% if section.quizzes %}
-                    <div class="quiz-section">
-                        <h3>Quizzes</h3>
-                        <form method="POST" action="">
-                            {% csrf_token %}
-                            {% for quiz in section.quizzes|dictsort:"order" %}
-                                <div class="quiz-block">
-                                    <p><strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}</p>
-
-                                    {% if quiz.show_answer %}
-                                        <p class="quiz-answer">Answer: {{ quiz.placeholder }}</p>
-                                    {% else %}
-                                        <form method="POST" action="">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
-                                            <input
-                                                type="text"
-                                                name="answer"
-                                                placeholder="{{ quiz.placeholder }}"
-                                                class="quiz-input"
-                                                required
-                                            >
-                                            <button type="submit">Submit</button>
-                                        </form>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        </form>
-                    </div>
-                {% endif %}
+                <!-- Save/Unsave Button -->
+                <form method="POST" action="{% url 'toggle_save_course' course.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-warning btn-lg mt-4 mt-md-0 d-flex align-items-center">
+                        {% if course.is_saved %}
+                            <i class="bi bi-star-fill me-2 text-warning"></i> Unsave Course
+                        {% else %}
+                            <i class="bi bi-star me-2"></i> Save Course
+                        {% endif %}
+                    </button>
+                </form>
             </div>
         </div>
-    {% endfor %}
+    </div>
 
-    {% if messages %}
-        <ul class="feedback-messages">
-            {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    <!-- Section Display (Wider Box but Centered) -->
+    <div class="section-display my-5">
+        {% for section in sections %}
+            <div class="section shadow-sm rounded-4 bg-white mb-4 overflow-hidden">
+                <!-- Clickable Title -->
+                <div class="section-title px-4 py-3 bg-light border-bottom d-flex justify-content-between align-items-center"
+                     role="button"
+                     data-bs-toggle="collapse"
+                     data-bs-target="#sectionBody{{ section.id }}"
+                     aria-expanded="true"
+                     aria-controls="sectionBody{{ section.id }}">
+
+                    <h5 class="mb-0 fw-semibold section-heading">
+                        Section {{ section.order|add:1 }}: {{ section.title }}
+                    </h5>
+
+                    <i class="bi bi-chevron-down toggle-icon transition"></i>
+                </div>
+
+                <!-- Section Body -->
+                <div id="sectionBody{{ section.id }}" class="section-body px-4 py-3">
+                    {% for content in section.contents|dictsort:"order" %}
+                        {% if content.type == "text" %}
+                            <div class="content-block text-content">
+                                <p>{{ content.text_content }}</p>
+                            </div>
+                        {% elif content.type == "image" %}
+                            <div class="content-block image-content">
+                                <div class="image-wrapper">
+                                    <img src="{{ content.image }}" alt="{{ content.alt_text }}">
+                                </div>
+                            </div>
+                        {% elif content.type == "video" %}
+                            <div class="content-block video-content">
+                                <div class="video-wrapper">
+                                    <iframe src="{{ content.video_url }}" frameborder="0" allowfullscreen></iframe>
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary transcription-toggle-btn mt-3 mb-2"
+                                        data-target="transcription-{{ content.id }}">
+                                    📄 Show Transcription
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if section.quizzes %}
+                        <div class="quiz-section">
+                            <h3 class="quiz-title">Quizzes</h3>
+                            <form method="POST" action="">
+                                {% csrf_token %}
+                                {% for quiz in section.quizzes|dictsort:"order" %}
+                                    <div class="quiz-block">
+                                        <label class="quiz-label">
+                                            <strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}
+                                        </label>
+
+                                        {% if quiz.show_answer %}
+                                            <p class="quiz-answer">Answer: {{ quiz.placeholder }}</p>
+                                        {% else %}
+                                            <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+                                            <div class="quiz-input-wrapper">
+                                                <input
+                                                    type="text"
+                                                    name="answer"
+                                                    placeholder="{{ quiz.placeholder }}"
+                                                    class="quiz-input"
+                                                    required
+                                                >
+                                                <button type="submit" class="quiz-submit-btn">Submit</button>
+                                            </div>
+
+                                            {% if incorrect_feedback.quiz_id == quiz.id %}
+                                                <p class="feedback error">{{ incorrect_feedback.message }}</p>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- GLOBAL VIDEO TRANSCRIPTION SLIDEOUTS -->
+    {% for video_id, transcription in video_transcriptions.items %}
+    <div id="transcription-{{ video_id }}" class="video-transcription-slideout">
+        <div class="slideout-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Video Transcription</h5>
+            <button type="button"
+                    class="transcription-close-btn"
+                    data-target="transcription-{{ video_id }}">
+                &times;
+            </button>
+        </div>
+        <div class="slideout-body p-3">
+            <p>{{ transcription }}</p>
+        </div>
+    </div>
+    {% endfor %}
 {% endblock %}
 
 {% block script %}

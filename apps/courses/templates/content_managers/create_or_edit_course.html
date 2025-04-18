@@ -15,109 +15,144 @@
 {% endblock %}
 
 {% block content %}
-    <form id="main-course-form" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ course_form|crispy }}
+    <div class="container my-5">
+        <div class="card shadow-lg p-4 rounded-4 bg-white">
+            <h2 class="text-center mb-4">
+                {% if mode == "edit_draft" %}
+                    Edit Draft Course
+                {% elif mode == "edit_published" %}
+                    Edit Published Course
+                {% elif mode == "create" %}
+                    Create Course
+                {% else %}
+                    {{ mode|title }} Course
+                {% endif %}
+            </h2>
 
-        {% if mode == "create" %}
-            <button type="submit" name="action" value="save_draft">Save as Draft</button>
-            <button type="submit" name="action" value="publish">Publish</button>
+            <form id="main-course-form" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ course_form|crispy }}
 
-        {% elif mode == "edit_draft" %}
-            <button type="submit" name="action" value="save_draft">Save</button>
-            <button type="submit" name="action" value="publish">Publish</button>
-            <button type="submit" name="action" value="delete_course" class="btn btn-danger">Delete Draft</button>
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    {% if mode == "create" %}
+                        <button class="btn btn-outline-secondary" type="submit" name="action" value="save_draft">Save as Draft</button>
+                        <button class="btn btn-primary" type="submit" name="action" value="publish">Publish</button>
+                    {% elif mode == "edit_draft" %}
+                        <button class="btn btn-outline-secondary" type="submit" name="action" value="save_draft">Save</button>
+                        <button class="btn btn-primary" type="submit" name="action" value="publish">Publish</button>
+                        <button class="btn btn-danger ms-auto" type="submit" name="action" value="delete_course">Delete Draft</button>
+                    {% elif mode == "edit_published" %}
+                        <button class="btn btn-warning" type="submit" name="action" value="save_draft">Unpublish</button>
+                        <button class="btn btn-success" type="submit" name="action" value="publish">Make Changes</button>
+                        <button class="btn btn-danger ms-auto" type="submit" name="action" value="delete_course">Delete Course</button>
+                    {% endif %}
+                </div>
 
-        {% elif mode == "edit_published" %}
-            <button type="submit" name="action" value="save_draft">Unpublish</button>
-            <button type="submit" name="action" value="publish">Make Changes</button>
-            <button type="submit" name="action" value="delete_course" class="btn btn-danger">Delete Course</button>
-        {% endif %}
+                <input type="hidden" name="action" id="form-action">
 
-        <input type="hidden" name="action" id="form-action">
+                {{ section_formset.management_form }}
+                {{ text_content_formset.management_form }}
+                {{ image_content_formset.management_form }}
+                {{ video_content_formset.management_form }}
+                {{ quiz_formset.management_form }}
 
-        {{ section_formset.management_form }}
-        {{ text_content_formset.management_form }}
-        {{ image_content_formset.management_form }}
-        {{ video_content_formset.management_form }}
-        {{ quiz_formset.management_form }}
+                <div id="sections" class="mt-5"></div>
 
-        <div id="sections"></div>
-
-        <div id="global-add-toolbar" class="add-toolbar">
-            <button type="button" class="toolbar-btn" id="add-text-btn" title="Add Text">
-                <i class="fas fa-font"></i>
-            </button>
-            <button type="button" class="toolbar-btn" id="add-image-btn" title="Add Image">
-                <i class="fas fa-image"></i>
-            </button>
-            <button type="button" class="toolbar-btn" id="add-video-btn" title="Add Video">
-                <i class="fas fa-video"></i>
-            </button>
-            <button type="button" class="toolbar-btn" id="add-quiz-btn" title="Add Quiz">
-                <i class="fas fa-question-circle"></i>
-            </button>
-            <button type="button" class="toolbar-btn" id="add-section-btn" title="Add Section">
-                <i class="fas fa-plus"></i>
-            </button>
+                <div id="global-add-toolbar" class="add-toolbar d-flex flex-wrap justify-content-center gap-3 mt-4">
+                    <button type="button" class="btn btn-outline-primary" id="add-text-btn" title="Add Text">
+                        <i class="fas fa-font me-1"></i> Add Text
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="add-image-btn" title="Add Image">
+                        <i class="fas fa-image me-1"></i> Add Image
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="add-video-btn" title="Add Video">
+                        <i class="fas fa-video me-1"></i> Add Video
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="add-quiz-btn" title="Add Quiz">
+                        <i class="fas fa-question-circle me-1"></i> Add Quiz
+                    </button>
+                    <button type="button" class="btn btn-outline-success" id="add-section-btn" title="Add Section">
+                        <i class="fas fa-plus me-1"></i> Add Section
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 
     <!-- Hidden template for empty section form -->
     <div id="empty-section-form" style="display: none;">
-        <div class="section-form">
-            <h3 class="section-title">Section __num__</h3>
+        <div class="section-form border rounded-3 p-4 my-4 bg-light">
+            <h4 class="section-title mb-3">Section __num__</h4>
             {{ section_formset.empty_form|crispy }}
-            <button type="button" class="remove-section btn btn-danger">Remove</button>
+            <button type="button" class="btn btn-danger mt-3 remove-section">Remove Section</button>
 
-            <div class="section-contents">
-                <!-- Content Forms will be added here -->
-            </div>
-
-            <div class="section-quizzes">
-                <!-- Quiz Forms will be added here -->
-            </div>
+            <div class="section-contents mt-4"></div>
+            <div class="section-quizzes mt-4"></div>
         </div>
     </div>
 
     <!-- Hidden template for empty text content form -->
     <div id="empty-text-content-form" style="display: none;">
-        <div class="text-content-form">
+        <div class="text-content-form mb-4 p-3 border rounded bg-white shadow-sm">
             {{ text_content_formset.empty_form|crispy }}
-            <button type="button" class="remove-content btn btn-danger">Remove Content</button>
+            <button type="button" class="btn btn-danger mt-2 remove-content">Remove Content</button>
         </div>
     </div>
 
     <!-- Hidden template for empty image content form -->
     <div id="empty-image-content-form" style="display: none;">
-        <div class="image-content-form">
-            <img src="" alt="Image preview" class="image-preview" style="display: none; max-width: 100%; height: auto;" />
-
+        <div class="image-content-form mb-4 p-3 border rounded bg-white shadow-sm">
+            <img src="" alt="Image preview" class="image-preview mb-2" style="display: none; max-width: 100%; height: auto;" />
             {{ image_content_formset.empty_form|crispy }}
-            <button type="button" class="remove-content btn btn-danger">Remove Image</button>
+            <button type="button" class="btn btn-danger mt-2 remove-content">Remove Image</button>
         </div>
     </div>
 
     <!-- Hidden template for empty video content form -->
     <div id="empty-video-content-form" style="display: none;">
-        <div class="video-content-form">
+        <div class="video-content-form mb-4 p-3 border rounded bg-white shadow-sm">
             <iframe
-                class="video-preview"
+                class="video-preview mb-2"
                 style="display: none; width: 100%; max-width: 560px; height: 315px;"
                 frameborder="0"
                 allowfullscreen>
             </iframe>
 
+            <!-- Form fields from formset -->
             {{ video_content_formset.empty_form|crispy }}
-            <button type="button" class="remove-content btn btn-danger">Remove Video</button>
+
+            <!-- Transcription Button -->
+            <button type="button" class="btn btn-primary mt-2 transcribe-video">
+                Auto Transcription
+            </button>
+
+            <!-- Remove Button -->
+            <button type="button" class="btn btn-danger mt-2 remove-content">Remove Video</button>
         </div>
     </div>
 
     <!-- Hidden template for empty quiz form -->
     <div id="empty-quiz-form" style="display: none;">
-        <div class="quiz-form">
+        <div class="quiz-form mb-4 p-3 border rounded bg-white shadow-sm">
             {{ quiz_formset.empty_form|crispy }}
-            <button type="button" class="remove-quiz btn btn-danger">Remove Quiz</button>
+            <button type="button" class="btn btn-danger mt-2 remove-quiz">Remove Quiz</button>
+        </div>
+    </div>
+
+    <!-- Transcription Modal with Spinner -->
+    <div class="modal" id="transcriptionModal" tabindex="-1" role="dialog" aria-labelledby="transcriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transcriptionModalLabel">Transcribing Video...</h5>
+                </div>
+                <div class="modal-body">
+                    <div id="transcription-spinner" class="spinner-border text-primary" role="status" style="display: none;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p>Please wait while the transcription is being generated.</p>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

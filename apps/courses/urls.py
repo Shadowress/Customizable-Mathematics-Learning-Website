@@ -8,5 +8,8 @@ urlpatterns = [
     path('edit-course/<slug:slug>/', views.create_or_edit_course, name='edit_course'),
 
     # --- Normal Users ---
+    path('toggle-save-course/<int:course_id>/', views.toggle_save_course, name='toggle_save_course'),
+    path('transcribe-video/', views.transcribe_video, name='transcribe_video'),
+
     path('<slug:slug>/', views.course, name='course'),
 ]

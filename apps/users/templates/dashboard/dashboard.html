@@ -2,31 +2,98 @@
 
 {% load static %}
 
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
 {% block header %}
     {% include 'includes/normal_user_header.html' %}
 {% endblock %}
 
 {% block content %}
-    <form method="GET" action="">
-        <input
-            type="text"
-            name="q"
-            placeholder="Search courses..."
-            value="{{ query|default:'' }}"
-        >
-        <button type="submit">Search</button>
-    </form>
+    <!-- Container for centering content -->
+    <div class="container">
+        <!-- Search and Filter Form -->
+        <div class="row justify-content-center mb-4 p-3 m-3 bg-light rounded shadow-sm">
+            <div class="col-md-10">
+                <form id="searchForm" method="GET" action="" class="d-flex flex-wrap align-items-center justify-content-center gap-2">
+                    <input type="hidden" name="saved_only" id="savedOnlyInput" value="{% if saved_only %}true{% else %}false{% endif %}">
 
-    <h2>Courses</h2>
-    <ul>
-        {% for course in courses %}
-            <li>
-                <a href="{% url 'course' course.slug %}">{{ course.title }}</a>
-                {{ course.description }}
-                ({{ course.get_difficulty_display }})
-            </li>
-        {% empty %}
-            <p>No courses available.</p>
-        {% endfor %}
-    </ul>
+                    <!-- Saved Filter Button -->
+                    <button type="button" class="btn {% if saved_only %}btn-warning text-dark{% else %}btn-outline-warning{% endif %} me-2" onclick="toggleSavedFilter()">
+                        ⭐ Show Saved
+                    </button>
+
+                    <!-- Search Input -->
+                    <input
+                        type="text"
+                        class="form-control flex-grow-1"
+                        style="min-width: 250px; max-width: 600px;"
+                        name="q"
+                        placeholder="Search courses..."
+                        value="{{ query|default:'' }}"
+                    >
+
+                    <!-- Search Button -->
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Courses Display -->
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for course in courses %}
+                        <div class="col">
+                            <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
+                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
+                                    <div class="card-body position-relative p-4">
+                                        <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
+
+                                        {% if course.is_saved %}
+                                            <span class="position-absolute top-0 end-0 m-2" style="font-size: 1.5rem; color: gold;">★</span>
+                                        {% endif %}
+
+                                        <p class="card-text text-muted">{{ course.description|truncatechars:100 }}</p>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0 px-4 pb-3">
+                                        <span class="badge
+                                            {% if course.difficulty == 'Junior' %}
+                                                bg-success
+                                            {% elif course.difficulty == 'Intermediate' %}
+                                                bg-warning text-dark
+                                            {% elif course.difficulty == 'Advance' %}
+                                                bg-danger
+                                            {% else %}
+                                                bg-secondary
+                                            {% endif %}
+                                            position-absolute bottom-0 end-0 mb-3 me-3">
+                                            {{ course.difficulty|title }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No courses available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script>
+    function toggleSavedFilter() {
+        const savedOnlyInput = document.getElementById("savedOnlyInput");
+        savedOnlyInput.value = savedOnlyInput.value === "true" ? "false" : "true";
+        document.getElementById("searchForm").submit();
+    }
+    </script>
 {% endblock %}

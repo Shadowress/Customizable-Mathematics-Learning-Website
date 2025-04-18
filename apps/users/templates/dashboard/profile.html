@@ -3,55 +3,132 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
+{% block title %}
+Profile
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
 {% block header %}
     {% include 'includes/normal_user_header.html' %}
 {% endblock %}
 
 {% block content %}
-    <p>Profile</p>
+    <div class="container-fluid profile-container">
+        <!-- Edit Button -->
+        <img src="{% static 'img/edit_button.png' %}" id="edit-btn" onclick="toggleEdit()" alt="Edit">
 
-    <form id="profile-picture-form" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+        <div class="row align-items-center" style="height: 350px;">
+            <!-- Profile Picture -->
+            <div class="col-md-3 text-center mb-3 mb-md-0">
+                <form id="profile-picture-form" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <label for="id_profile_picture">
+                        <img id="profile-preview"
+                             class="profile-picture"
+                             src="
+                             {% if user.profile_picture %}
+                                 {{ user.profile_picture.url }}
+                             {% else %}
+                                 {% static 'img/default_profile.png' %}
+                             {% endif %}"
+                             alt="Profile Picture"
+                             style="width: 250px; height: 250px;"
+                        >
+                    </label>
+                    <input type="file" id="id_profile_picture" class="hidden" name="profile_picture" accept="image/*">
+                </form>
+            </div>
 
-        <label for="id_profile_picture">
-            <img id="profile-preview"
-                 src="
-                 {% if user.profile_picture %}
-                    {{ user.profile_picture.url }}
-                 {% else %}
-                    {% static 'img/default_profile.png' %}
-                 {% endif %}
-                 "
-                 alt="Profile Picture"
-            >
-        </label>
-        <input type="file" id="id_profile_picture" class="hidden" name="profile_picture" accept="image/*">
-    </form>
+            <!-- User Info -->
+            <div class="col-md-6">
+                <div class="view-mode mt-4">
+                    <div class="card p-4 shadow-sm border-0">
+                        <h4 class="mb-3">Account Info</h4>
 
-    <div class="view-mode">
-        <p><strong>Username:</strong> {{ user.username }}</p>
-        {% if user.date_of_birth %}
-            <p><strong>Date of Birth:</strong> {{ user.date_of_birth }}</p>
-        {% endif %}
+                        <div class="mb-2">
+                            <strong class="text-muted">Username:</strong>
+                            <span class="ms-2">{{ user.username }}</span>
+                        </div>
+
+                        {% if user.date_of_birth %}
+                            <div>
+                                <strong class="text-muted">Date of Birth:</strong>
+                                <span class="ms-2">{{ user.date_of_birth }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form id="profile-form" method="POST">
+                    {% csrf_token %}
+
+                    <div class="edit-mode hidden mt-4">
+                        <div class="card p-4 shadow-sm border-0">
+                            <h4 class="mb-3">Edit Profile</h4>
+
+                            {{ form|crispy }}
+
+                            {% if user.has_usable_password and user.socialaccount_set.all|length == 0 %}
+                                <a href="{% url 'password_reset' %}" class="btn btn-outline-secondary mt-2">
+                                    Change Password
+                                </a>
+                            {% endif %}
+
+                            <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <form id="profile-form" method="POST">
-        {% csrf_token %}
+    <div class="container mt-4">
+        <h4 class="mb-4">🎓 Completed Courses</h4>
 
-        <div class="edit-mode hidden">
-            {{ form|crispy }}
+        {% if request.user.completed_courses.all %}
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                {% for course in request.user.completed_courses.all %}
+                    <div class="col">
+                        <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
+                            <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
+                                <div class="card-body position-relative p-4">
+                                    <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
 
-            {% if user.has_usable_password and user.socialaccount_set.all|length == 0 %}
-                <a href="{% url 'password_reset' %}">
-                    <button type="button">Change Password</button>
-                </a>
-            {% endif %}
+                                    {% if course.is_saved %}
+                                        <span class="position-absolute top-0 end-0 m-2" style="font-size: 1.5rem; color: gold;">★</span>
+                                    {% endif %}
 
-            <button type="submit">Save Changes</button>
-        </div>
-
-        <img src="{% static 'img/edit_button.png' %}" id="edit-btn" onclick="toggleEdit()">
-    </form>
+                                    <p class="card-text text-muted">{{ course.description|truncatechars:100 }}</p>
+                                </div>
+                                <div class="card-footer bg-transparent border-0 px-4 pb-3">
+                                    <span class="badge
+                                        {% if course.difficulty == 'junior' %}
+                                            bg-success
+                                        {% elif course.difficulty == 'intermediate' %}
+                                            bg-warning text-dark
+                                        {% elif course.difficulty == 'advance' %}
+                                            bg-danger
+                                        {% else %}
+                                            bg-secondary
+                                        {% endif %}
+                                        position-absolute bottom-0 end-0 mb-3 me-3">
+                                        {{ course.difficulty|title }}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                You haven't completed any courses yet.
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block script %}
