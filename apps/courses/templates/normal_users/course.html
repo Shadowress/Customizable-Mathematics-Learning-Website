@@ -125,36 +125,40 @@ Course
                     {% if section.quizzes %}
                         <div class="quiz-section">
                             <h3 class="quiz-title">Quizzes</h3>
-                            <form method="POST" action="">
-                                {% csrf_token %}
-                                {% for quiz in section.quizzes|dictsort:"order" %}
-                                    <div class="quiz-block">
-                                        <label class="quiz-label">
-                                            <strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}
-                                        </label>
 
+                            {% for quiz in section.quizzes|dictsort:"order" %}
+                                <div class="quiz-block mb-4">
+                                    <label class="quiz-label d-block mb-2">
+                                        <strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}
+                                    </label>
+
+                                    <div id="quiz-input-area-{{ quiz.id }}">
                                         {% if quiz.show_answer %}
                                             <p class="quiz-answer">Answer: {{ quiz.placeholder }}</p>
                                         {% else %}
-                                            <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
-                                            <div class="quiz-input-wrapper">
+                                            <div class="quiz-input-wrapper d-flex gap-2">
+                                                <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+
                                                 <input
                                                     type="text"
-                                                    name="answer"
+                                                    id="answer-input-{{ quiz.id }}"
+                                                    class="quiz-input form-control"
                                                     placeholder="{{ quiz.placeholder }}"
-                                                    class="quiz-input"
                                                     required
                                                 >
-                                                <button type="submit" class="quiz-submit-btn">Submit</button>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-primary quiz-submit-btn"
+                                                >
+                                                    Submit
+                                                </button>
                                             </div>
 
-                                            {% if incorrect_feedback.quiz_id == quiz.id %}
-                                                <p class="feedback error">{{ incorrect_feedback.message }}</p>
-                                            {% endif %}
+                                            <div id="quiz-feedback-{{ quiz.id }}" class="mt-2"></div>
                                         {% endif %}
                                     </div>
-                                {% endfor %}
-                            </form>
+                                </div>
+                            {% endfor %}
                         </div>
                     {% endif %}
                 </div>

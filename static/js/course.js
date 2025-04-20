@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
     const sections = document.querySelectorAll(".section");
     if (!sections.length) return;
 
@@ -38,6 +38,67 @@ document.addEventListener("DOMContentLoaded", () => {
             body.style.display = "block";
             currentActiveSection = section;
         });
+    });
+
+    function getCSRFToken() {
+        const cookieValue = document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)');
+        return cookieValue ? cookieValue.pop() : '';
+    }
+
+    function submitQuizAnswer(quizId) {
+        const answerInput = document.getElementById(`answer-input-${quizId}`);
+        const userAnswer = answerInput.value.trim();
+
+        fetch("/courses/submit-quiz-answer/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify({
+                quiz_id: quizId,
+                answer: userAnswer
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const quizArea = document.getElementById(`quiz-input-area-${quizId}`);
+
+            if (data.success && data.is_correct) {
+                // Replace the input area with the correct answer
+                quizArea.innerHTML = `<p class="quiz-answer">Answer: ${data.correct_answer}</p>`;
+            } else if (data.success) {
+                // Show incorrect answer feedback without replacing the input
+                const feedbackContainer = document.getElementById(`quiz-feedback-${quizId}`);
+                feedbackContainer.innerHTML = `<p class="text-danger">${data.message || "Incorrect answer."}</p>`;
+            } else {
+                // General error message
+                const feedbackContainer = document.getElementById(`quiz-feedback-${quizId}`);
+                feedbackContainer.innerHTML = `<p class="text-danger">${data.message || "Something went wrong."}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error("Error submitting answer:", error);
+            const feedbackContainer = document.getElementById(`quiz-feedback-${quizId}`);
+            feedbackContainer.innerHTML = `<p class="text-danger">Something went wrong. Try again later.</p>`;
+        });
+    }
+
+    document.body.addEventListener('click', function (event) {
+        if (event.target && event.target.classList.contains('quiz-submit-btn')) {
+            event.preventDefault();
+
+            const quizBlock = event.target.closest('.quiz-block');
+            const quizIdInput = quizBlock.querySelector('input[name="quiz_id"]');
+
+            if (!quizIdInput) {
+                console.warn("Quiz ID input not found.");
+                return;
+            }
+
+            const quizId = quizIdInput.value;
+            submitQuizAnswer(quizId);
+        }
     });
 
     // Course Scheduling

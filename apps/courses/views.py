@@ -24,43 +24,6 @@ from .forms import SectionFormSet, QuizFormSet
 def course(request, slug):
     course_qs = get_object_or_404(Course, slug=slug)
     user = request.user
-    incorrect_feedback = {}
-
-    if request.method == "POST":
-        quiz_id = request.POST.get("quiz_id")
-        user_answer = request.POST.get("answer", "").strip().lower()
-
-        try:
-            quiz = Quiz.objects.get(id=quiz_id)
-        except Quiz.DoesNotExist:
-            incorrect_feedback = {
-                "quiz_id": quiz_id,
-                "message": "Invalid quiz.",
-            }
-        else:
-            correct_answer = (quiz.correct_answer or "").strip().lower()
-
-            if user_answer == correct_answer:
-                Answer.objects.get_or_create(user=user, quiz=quiz)
-
-                course_quizzes = Quiz.objects.filter(section__course=quiz.section.course)
-                answered_quizzes = Answer.objects.filter(user=user, quiz__in=course_quizzes)
-
-                if answered_quizzes.count() == course_quizzes.count():
-                    user.completed_courses.add(quiz.section.course)
-
-                    ScheduledCourse.objects.filter(
-                        user=user,
-                        course=quiz.section.course,
-                        scheduled_time__gt=now()
-                    ).delete()
-
-            else:
-                incorrect_feedback = {
-                    "quiz_id": quiz.id,
-                    "message": "Incorrect answer.",
-                }
-
     sections_qs = Section.objects.filter(course=course_qs).order_by('order')
 
     is_saved = False
@@ -154,10 +117,67 @@ def course(request, slug):
             "normal_user_header_included": True,
             "course": course,
             "sections": sections,
-            "incorrect_feedback": incorrect_feedback,
             "video_transcriptions": video_transcriptions
         }
     )
+
+
+@require_POST
+@user_passes_test(normal_user_required, login_url="homepage")
+def submit_quiz_answer(request):
+    # Parse the JSON body
+    try:
+        data = json.loads(request.body)
+        quiz_id = data.get("quiz_id")
+        user_answer = data.get("answer", "").strip().lower()
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "message": "Invalid JSON format."})
+
+    user = request.user
+
+    if not quiz_id:
+        return JsonResponse({"success": False, "message": "Missing quiz ID."})
+
+    try:
+        quiz = Quiz.objects.get(id=quiz_id)
+    except Quiz.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Invalid quiz."})
+
+    correct_answer = (quiz.correct_answer or "").strip()
+    is_correct = user_answer == correct_answer.lower()
+
+    if is_correct:
+        Answer.objects.get_or_create(user=user, quiz=quiz)
+
+        # If the user has answered all quizzes in the course, mark it as completed
+        course_quizzes = Quiz.objects.filter(section__course=quiz.section.course)
+        answered_quizzes = Answer.objects.filter(user=user, quiz__in=course_quizzes)
+
+        if answered_quizzes.count() == course_quizzes.count():
+            user.completed_courses.add(quiz.section.course)
+
+            ScheduledCourse.objects.filter(
+                user=user,
+                course=quiz.section.course,
+                scheduled_time__gt=now()
+            ).delete()
+
+        return JsonResponse({
+            "success": True,
+            "is_correct": True,
+            "message": "Correct!",
+            "quiz_id": quiz.id,
+            "correct_answer": correct_answer,
+        })
+
+    else:
+        return JsonResponse({
+            "success": True,
+            "is_correct": False,
+            "message": "Incorrect answer.",
+            "quiz_id": quiz.id,
+        })
+
 
 
 @user_passes_test(normal_user_required, login_url="homepage")
