@@ -16,7 +16,7 @@ Dashboard
 
 {% block content %}
     <!-- Container for centering content -->
-    <div class="container">
+    <div class="container-xl">
         <!-- Search and Filter Form -->
         <div class="row justify-content-center mb-4 p-3 m-3 bg-light rounded shadow-sm">
             <div class="col-md-10">
@@ -44,10 +44,11 @@ Dashboard
             </div>
         </div>
 
-        <!-- Courses Display -->
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <!-- Courses and Scheduled Display -->
+        <div class="row justify-content-between">
+            <!-- Left Column: Courses -->
+            <div class="col-lg-7">
+                <div class="row row-cols-1 row-cols-md-2 g-4">
                     {% for course in courses %}
                         <div class="col">
                             <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
@@ -82,6 +83,29 @@ Dashboard
                     {% empty %}
                         <p class="text-muted">No courses available.</p>
                     {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right Column: Scheduled Courses -->
+            <div class="col-lg-3 ms-auto" style="padding-right: 20px;">
+                <div class="card shadow-sm border-0 rounded-4 p-3">
+                    <h5 class="card-title mb-3 fs-5">📅 Scheduled Courses</h5> <!-- Smaller font size -->
+
+                    {% if scheduled_courses %}
+                        <ul class="list-group list-group-flush">
+                            {% for item in scheduled_courses %}
+                                <li class="list-group-item d-flex justify-content-between align-items-start p-2">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-semibold fs-6">{{ item.course.title }}</div> <!-- Smaller font size -->
+                                        <small class="text-muted" style="font-size: 0.75rem;">{{ item.scheduled_time|date:"l, j F Y, g:i A" }}</small>
+                                    </div>
+                                    <a href="{% url 'course' item.course.slug %}" class="badge bg-primary text-decoration-none py-1 px-2">View</a> <!-- Smaller button -->
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No courses scheduled.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

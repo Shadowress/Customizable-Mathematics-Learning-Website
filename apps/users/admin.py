@@ -1,5 +1,3 @@
-from typing import Any
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
@@ -68,6 +66,10 @@ class CustomUserAdmin(UserAdmin):
             obj.role = "content_manager"
         super().save_model(request, obj, form, change)
 
+
+admin.site.site_header = "InaudibleMath Administration"
+admin.site.site_title = "InaudibleMath Admin"
+admin.site.index_title = "Welcome to the InaudibleMath Admin Panel"
 
 admin.site.unregister(Group)
 admin.site.register(CustomUser, CustomUserAdmin)

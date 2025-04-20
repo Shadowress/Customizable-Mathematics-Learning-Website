@@ -46,17 +46,31 @@ Course
                     </span>
                 </div>
 
-                <!-- Save/Unsave Button -->
-                <form method="POST" action="{% url 'toggle_save_course' course.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-warning btn-lg mt-4 mt-md-0 d-flex align-items-center">
-                        {% if course.is_saved %}
-                            <i class="bi bi-star-fill me-2 text-warning"></i> Unsave Course
-                        {% else %}
-                            <i class="bi bi-star me-2"></i> Save Course
-                        {% endif %}
-                    </button>
-                </form>
+                <!-- Save and Schedule Buttons (Stacked) -->
+                <div class="d-flex flex-column align-items-start mt-4 mt-md-0">
+                    <!-- Save/Unsave Button -->
+                    <form method="POST" action="{% url 'toggle_save_course' course.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-warning btn-lg mb-3 d-flex align-items-center">
+                            {% if course.is_saved %}
+                                <i class="bi bi-star-fill me-2 text-warning"></i> Unsave Course
+                            {% else %}
+                                <i class="bi bi-star me-2"></i> Save Course
+                            {% endif %}
+                        </button>
+                    </form>
+
+                    {% if not course.is_completed %}
+                        <!-- Schedule/Unschedule Course Button -->
+                        <button type="button" class="btn {% if course.scheduled_time %}btn-primary{% else %}btn-outline-primary{% endif %} btn-lg d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#scheduleCourseModal">
+                            {% if course.scheduled_time %}
+                                <i class="bi bi-calendar-check-fill me-2"></i> Scheduled
+                            {% else %}
+                                <i class="bi bi-calendar-event me-2"></i> Schedule Course
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -164,6 +178,71 @@ Course
         </div>
     </div>
     {% endfor %}
+
+    <!-- Schedule Course Modal -->
+    <div class="modal fade" id="scheduleCourseModal" tabindex="-1" aria-labelledby="scheduleCourseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scheduleCourseModalLabel">Schedule This Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <form method="POST" action="{% url 'schedule_course' course.id %}">
+                    {% csrf_token %}
+                    <!-- Hidden action field -->
+                    <input type="hidden" name="action" id="scheduleAction" value="{% if course.scheduled_time %}view{% else %}schedule{% endif %}">
+
+                    <div class="modal-body">
+                        {% if course.scheduled_time %}
+                            <!-- Scheduled view -->
+                            <div id="scheduledView">
+                                <p class="mt-3">
+                                    <i class="bi bi-calendar-event-fill me-1"></i>
+                                    Your course is scheduled for:<br>
+                                    <strong>{{ course.scheduled_time|date:"l, j F Y, g:i A" }}</strong>
+                                </p>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-warning" id="rescheduleBtn">Reschedule</button>
+                                    <button type="submit" class="btn btn-danger" onclick="document.getElementById('scheduleAction').value = 'unschedule'">Unschedule</button>
+                                </div>
+                            </div>
+
+                            <!-- Hidden reschedule form initially -->
+                            <div id="rescheduleForm" class="d-none">
+                                <div class="mb-3">
+                                    <label for="scheduled_time" class="form-label">Select new date and time:</label>
+                                    <input type="datetime-local" id="scheduled_time" name="scheduled_time" class="form-control" required>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- New schedule form -->
+                            <div class="mb-3">
+                                <label for="scheduled_time" class="form-label">Select date and time:</label>
+                                <input type="datetime-local" id="scheduled_time" name="scheduled_time" class="form-control" required>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="modal-footer">
+                        {% if course.scheduled_time %}
+                            <!-- Initially hidden, shown during reschedule -->
+                            <button type="submit" class="btn btn-primary d-none" id="confirmRescheduleBtn" onclick="document.getElementById('scheduleAction').value = 'reschedule'">
+                                <i class="bi bi-check2-circle me-1"></i> Confirm Reschedule
+                            </button>
+                        {% else %}
+                            <!-- First-time schedule -->
+                            <button type="submit" class="btn btn-primary" onclick="document.getElementById('scheduleAction').value = 'schedule'">
+                                <i class="bi bi-check2-circle me-1"></i> Confirm Schedule
+                            </button>
+                        {% endif %}
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}

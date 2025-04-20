@@ -88,9 +88,9 @@ Profile
     <div class="container mt-4">
         <h4 class="mb-4">🎓 Completed Courses</h4>
 
-        {% if request.user.completed_courses.all %}
+        {% if published_completed_courses %}
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                {% for course in request.user.completed_courses.all %}
+                {% for course in published_completed_courses %}
                     <div class="col">
                         <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
                             <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
@@ -124,7 +124,7 @@ Profile
                 {% endfor %}
             </div>
         {% else %}
-            <div class="alert alert-info">
+            <div class="alert alert-info mt-3">
                 You haven't completed any courses yet.
             </div>
         {% endif %}

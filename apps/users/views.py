@@ -16,13 +16,14 @@ from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
-from apps.courses.models import Course
+from apps.courses.models import Course, ScheduledCourse
 from .forms import CustomSignupForm, ProfileUpdateForm
 from .permissions import normal_user_required, content_manager_required
 from .utils import generate_verification_token
@@ -349,6 +350,11 @@ def dashboard(request) -> HTTPResponse:
             "is_saved": course in user_saved_courses,
         })
 
+    scheduled_courses = ScheduledCourse.objects.filter(
+        user=request.user,
+        scheduled_time__gte=timezone.now()
+    ).select_related('course').order_by('scheduled_time')
+
     return render(
         request,
         "dashboard/dashboard.html",
@@ -357,6 +363,7 @@ def dashboard(request) -> HTTPResponse:
             "courses": courses,
             "query": query,
             "saved_only": saved_only,
+            "scheduled_courses": scheduled_courses,
         }
     )
 
@@ -372,7 +379,13 @@ def profile(request):
             form.save()
             return redirect("profile")
 
-    return render(request, "dashboard/profile.html", {"normal_user_header_included": True, "form": form})
+    published_completed_courses = request.user.completed_courses.filter(status='published')
+
+    return render(request, "dashboard/profile.html", {
+        "normal_user_header_included": True,
+        "form": form,
+        "published_completed_courses": published_completed_courses,
+    })
 
 
 @user_passes_test(normal_user_required, login_url="homepage")

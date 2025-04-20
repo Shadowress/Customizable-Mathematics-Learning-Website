@@ -1,9 +1,13 @@
 import os
 
+from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 from apps.users.models import CustomUser
+
+User = get_user_model()
 
 
 # Create your models here.
@@ -120,3 +124,20 @@ class Answer(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} answered {self.quiz}"
+
+
+class ScheduledCourse(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scheduled_courses')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='scheduled_by_users')
+
+    scheduled_time = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    notify_before_minutes = models.PositiveIntegerField(default=15)
+    notification_sent = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.course.title} at {self.scheduled_time}"
+
+    def get_notification_time(self):
+        return self.scheduled_time - timezone.timedelta(minutes=self.notify_before_minutes)

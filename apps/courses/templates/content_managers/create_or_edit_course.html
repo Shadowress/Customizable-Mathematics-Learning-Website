@@ -139,18 +139,14 @@
         </div>
     </div>
 
-    <!-- Transcription Modal with Spinner -->
-    <div class="modal" id="transcriptionModal" tabindex="-1" role="dialog" aria-labelledby="transcriptionModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="transcriptionModalLabel">Transcribing Video...</h5>
-                </div>
-                <div class="modal-body">
-                    <div id="transcription-spinner" class="spinner-border text-primary" role="status" style="display: none;">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                    <p>Please wait while the transcription is being generated.</p>
+    <!-- Transcription Modal -->
+    <div class="modal fade" id="transcriptionModal" tabindex="-1" aria-labelledby="transcriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4">
+                <div class="modal-body text-center d-flex justify-content-center align-items-center flex-column">
+                    <div class="spinner-border text-secondary mb-3" role="status" id="transcriptionSpinner" style="width: 2rem; height: 2rem;"></div>
+                    <div id="transcriptionStatus" class="fw-semibold fs-5 text-secondary mt-3">Transcribing video...</div>
+                    <button id="cancelTranscriptionBtn" type="button" class="btn btn-danger mt-3">Cancel</button>
                 </div>
             </div>
         </div>

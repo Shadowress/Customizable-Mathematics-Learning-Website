@@ -38,7 +38,77 @@ document.addEventListener("DOMContentLoaded", () => {
             body.style.display = "block";
             currentActiveSection = section;
         });
-    });``
+    });
+
+    // Course Scheduling
+    const scheduleModal = document.getElementById('scheduleCourseModal');
+    const rescheduleBtn = document.getElementById('rescheduleBtn');
+    const scheduleActionInput = document.getElementById('scheduleAction');
+    const scheduledTimeInput = document.getElementById('scheduled_time');
+    const confirmRescheduleBtn = document.getElementById('confirmRescheduleBtn');
+    const rescheduleInputDiv = document.getElementById('rescheduleForm');
+
+    function setMinDateTime(input) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 30);
+        now.setSeconds(0);
+        now.setMilliseconds(0);
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // adjust for timezone
+
+        const minDateTime = now.toISOString().slice(0, 16);
+        input.min = minDateTime;
+        input.value = minDateTime;
+
+        // Clear previous messages
+        input.setCustomValidity('');
+
+        input.addEventListener('input', () => {
+            if (input.value < minDateTime) {
+                input.setCustomValidity("The date and time selected must be at least 30 minutes from now.");
+            } else {
+                input.setCustomValidity('');
+            }
+        });
+    }
+
+    // When modal is shown
+    if (scheduleModal) {
+        scheduleModal.addEventListener('show.bs.modal', () => {
+            // Initial setup for datetime-local inputs
+            if (scheduledTimeInput) {
+                setMinDateTime(scheduledTimeInput);
+            }
+
+            // Reset to default modal state
+            if (rescheduleInputDiv) {
+                rescheduleInputDiv.classList.add('d-none');
+            }
+
+            if (confirmRescheduleBtn) {
+                confirmRescheduleBtn.classList.add('d-none');
+            }
+
+            if (scheduleActionInput) {
+                scheduleActionInput.value = 'view'; // default
+            }
+        });
+    }
+
+    // When Reschedule is clicked
+    if (rescheduleBtn) {
+        rescheduleBtn.addEventListener('click', () => {
+            if (rescheduleInputDiv && confirmRescheduleBtn && scheduleActionInput) {
+                rescheduleInputDiv.classList.remove('d-none');
+                confirmRescheduleBtn.classList.remove('d-none');
+                scheduleActionInput.value = 'reschedule';
+
+                const input = rescheduleInputDiv.querySelector('#scheduled_time');
+                if (input) {
+                    setMinDateTime(input);
+                }
+            }
+        });
+    }
 
     // Open transcription
     document.querySelectorAll('.transcription-toggle-btn').forEach(button => {

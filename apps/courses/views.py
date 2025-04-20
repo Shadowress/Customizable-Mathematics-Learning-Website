@@ -8,11 +8,11 @@ from django.contrib.auth.decorators import user_passes_test
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
-from apps.courses.models import Course, Content, Quiz, Section, Answer
+from apps.courses.models import Course, Content, Quiz, Section, Answer, ScheduledCourse
 from apps.users.permissions import normal_user_required, content_manager_required
 from .forms import CourseForm, VideoContentFormSet, ImageContentFormSet, TextContentFormSet
 from .forms import SectionFormSet, QuizFormSet
@@ -48,6 +48,13 @@ def course(request, slug):
 
                 if answered_quizzes.count() == course_quizzes.count():
                     user.completed_courses.add(quiz.section.course)
+
+                    ScheduledCourse.objects.filter(
+                        user=user,
+                        course=quiz.section.course,
+                        scheduled_time__gt=now()
+                    ).delete()
+
             else:
                 incorrect_feedback = {
                     "quiz_id": quiz.id,
@@ -60,6 +67,14 @@ def course(request, slug):
     if request.user.is_authenticated:
         is_saved = course_qs in request.user.saved_courses.all()
 
+    scheduled_course = ScheduledCourse.objects.filter(
+        user=request.user,
+        course=course_qs,
+        scheduled_time__gt=now()
+    ).order_by('scheduled_time').first()
+
+    is_completed = course_qs in user.completed_courses.all()
+
     course = {
         "id": course_qs.id,
         "title": course_qs.title,
@@ -67,6 +82,8 @@ def course(request, slug):
         "difficulty": course_qs.difficulty,
         "estimated_completion_time": course_qs.estimated_completion_time,
         "is_saved": is_saved,
+        "scheduled_time": scheduled_course.scheduled_time if scheduled_course else None,
+        "is_completed": is_completed,
     }
 
     sections = []
@@ -156,6 +173,73 @@ def toggle_save_course(request, course_id):
     return redirect('course', slug=course.slug)
 
 
+from django.utils.timezone import make_aware, now
+from datetime import datetime, timedelta
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
+
+
+@user_passes_test(normal_user_required, login_url="homepage")
+def schedule_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        scheduled_time_str = request.POST.get("scheduled_time")
+        existing_schedule = ScheduledCourse.objects.filter(user=request.user, course=course).first()
+
+        # Validate time input for scheduling and rescheduling
+        def parse_scheduled_time():
+            if not scheduled_time_str:
+                messages.error(request, "Scheduled time is required.")
+                return None
+            try:
+                scheduled_time = make_aware(datetime.strptime(scheduled_time_str, "%Y-%m-%dT%H:%M"))
+            except ValueError:
+                messages.error(request, "Invalid date/time format.")
+                return None
+            if scheduled_time < now() + timedelta(minutes=30):
+                messages.error(request, "Please select a time at least 30 minutes from now.")
+                return None
+            return scheduled_time
+
+        if action == "schedule":
+            if existing_schedule:
+                messages.warning(request, "This course is already scheduled.")
+            else:
+                scheduled_time = parse_scheduled_time()
+                if scheduled_time:
+                    ScheduledCourse.objects.create(
+                        user=request.user,
+                        course=course,
+                        scheduled_time=scheduled_time
+                    )
+                    messages.success(request, "✅ Course successfully scheduled!")
+
+        elif action == "reschedule":
+            if not existing_schedule:
+                messages.error(request, "No existing schedule found to reschedule.")
+            else:
+                scheduled_time = parse_scheduled_time()
+                if scheduled_time:
+                    existing_schedule.scheduled_time = scheduled_time
+                    existing_schedule.save()
+                    messages.success(request, "✅ Course successfully rescheduled!")
+
+        elif action == "unschedule":
+            if not existing_schedule:
+                messages.warning(request, "No schedule exists for this course.")
+            else:
+                existing_schedule.delete()
+                messages.success(request, "⛔ Course unscheduled.")
+
+        else:
+            messages.error(request, "Invalid action.")
+
+    return redirect('course', slug=course.slug)
+
+
 # --- Content Manager ---
 @user_passes_test(content_manager_required, login_url="homepage")
 def create_or_edit_course(request, slug=None):
@@ -205,7 +289,7 @@ def create_or_edit_course(request, slug=None):
             FIELD_WHITELISTS = {
                 "section": ["id", "title", "order"],
                 "text": ["id", "content_type", "text_content", "order", "section_order"],
-                "image": ["id", "content_type", "alt_text", "order", "section_order"],
+                "image": ["id", "content_type", "image", "alt_text", "order", "section_order"],
                 "video": ["id", "content_type", "video_url", "video_transcription", "order", "section_order"],
                 "quiz": ["id", "question", "correct_answer", "order", "section_order"],
             }
@@ -256,6 +340,7 @@ def create_or_edit_course(request, slug=None):
 
                 elif action == "save_draft":
                     course.status = Course.DRAFT
+                    ScheduledCourse.objects.filter(course=course).delete()
 
                 elif action == "delete_course":
                     course.delete()
@@ -367,6 +452,8 @@ def create_or_edit_course(request, slug=None):
     serialized_image_contents = _serialize_json_safe(serialized_image_contents)
     serialized_video_contents = _serialize_json_safe(serialized_video_contents)
     serialized_quizzes = _serialize_json_safe(serialized_quizzes)
+
+    print(serialized_image_contents)
 
     section_formset = SectionFormSet(prefix=section_prefix)
     text_content_formset = TextContentFormSet(prefix=text_content_prefix)

@@ -7,6 +7,10 @@ document.addEventListener("DOMContentLoaded", function (e) {
     const addQuizBtn = document.getElementById("add-quiz-btn");
 
     let currentSection = null;
+    let currentModal = null;
+    let isTranscribing = false;
+    let isDirty = false;
+    let isSubmitting = false;
 
     function setActiveSection(section) {
         currentSection = section;
@@ -373,22 +377,24 @@ document.addEventListener("DOMContentLoaded", function (e) {
         const videoInput = videoForm.querySelector('input[type="url"][name$="-video_url"]');
         const transcriptInput = videoForm.querySelector('textarea[name$="-video_transcription"]');
 
-        if (!videoInput) {
-            alert("Video URL input not found.");
+        const modalElement = document.getElementById("transcriptionModal");
+        currentModal = new bootstrap.Modal(modalElement);
+        currentModal.show();
+
+        if (!videoInput || !transcriptInput) {
+            updateTranscriptionModal("❌ Input fields not found.", false, "error");
             return;
         }
 
         const videoURL = videoInput.value.trim();
         if (!videoURL) {
-            alert("Please enter a YouTube video URL first.");
+            updateTranscriptionModal("❗ Please enter a YouTube video URL first.", false, "error");
             return;
         }
 
-        // Show loading spinner/modal while transcribing
-        const spinner = document.getElementById("transcription-spinner"); // Optional
-        if (spinner) spinner.style.display = "block";
+        updateTranscriptionModal("Transcribing video...", true, "info");
+        isTranscribing = true;
 
-        // Send to backend
         fetch("/courses/transcribe-video/", {
             method: "POST",
             headers: {
@@ -401,20 +407,68 @@ document.addEventListener("DOMContentLoaded", function (e) {
         })
         .then((response) => response.json())
         .then((data) => {
-            if (spinner) spinner.style.display = "none";
-
+            isTranscribing = false;
             if (data.status === "success") {
                 transcriptInput.value = data.transcription;
-                alert("Transcription complete!");
+                updateTranscriptionModal("✅ Transcription complete!", false, "success");
+                isDirty = true;
             } else {
-                alert("Transcription failed: " + data.message);
+                updateTranscriptionModal("❌ Transcription failed: " + data.message, false, "error");
             }
+
+            setTimeout(() => {
+                if (currentModal) currentModal.hide();
+            }, 2500);
         })
         .catch((error) => {
-            if (spinner) spinner.style.display = "none";
+            isTranscribing = false;
             console.error("Transcription error:", error);
-            alert("An error occurred while transcribing the video.");
+            updateTranscriptionModal("❌ An error occurred while transcribing the video.", false, "error");
+
+            setTimeout(() => {
+                if (currentModal) currentModal.hide();
+            }, 2500);
         });
+    }
+
+    function updateTranscriptionModal(message, showSpinner = true, type = "info") {
+        const spinner = document.getElementById("transcriptionSpinner");
+        const statusText = document.getElementById("transcriptionStatus");
+        const cancelBtn = document.getElementById("cancelTranscriptionBtn");
+
+        if (spinner) spinner.style.display = showSpinner ? "inline-block" : "none";
+
+        if (statusText) {
+            statusText.textContent = message;
+
+            // Remove previous status classes
+            statusText.classList.remove("text-success", "text-danger", "text-info", "text-warning");
+
+            // Add class based on type
+            switch (type) {
+                case "success":
+                    statusText.classList.add("text-success");
+                    break;
+                case "error":
+                    statusText.classList.add("text-danger");
+                    break;
+                case "warning":
+                    statusText.classList.add("text-warning");
+                    break;
+                default:
+                    statusText.classList.add("text-info");
+            }
+        }
+
+        if (cancelBtn) {
+            cancelBtn.style.display = showSpinner ? "inline-block" : "none";
+            cancelBtn.onclick = () => {
+                if (currentModal && isTranscribing) {
+                    isTranscribing = false;
+                    currentModal.hide();
+                }
+            };
+        }
     }
 
     function getCSRFToken() {
@@ -431,7 +485,6 @@ document.addEventListener("DOMContentLoaded", function (e) {
 
         for (let i = 0; i < sectionForms.length; i++) {
             const section = sectionForms[i];
-            console.log(sectionForms);
             const sectionNumber = i + 1;
 
             if (!hasValidContent(section)) {
@@ -685,13 +738,9 @@ document.addEventListener("DOMContentLoaded", function (e) {
     document.addEventListener("click", function(e) {
         if (e.target && e.target.classList.contains("transcribe-video")) {
             const videoForm = e.target.closest(".video-content-form");
-            console.log(videoForm); // todo
             handleVideoTranscription(videoForm);
         }
     });
-
-    let isDirty = false;
-    let isSubmitting = false;
 
     const mainForm = document.querySelector("#main-course-form"); // Add an ID to your main form
 

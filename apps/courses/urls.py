@@ -6,10 +6,10 @@ urlpatterns = [
     # --- Content Managers ---
     path('create-course/', views.create_or_edit_course, name='create_course'),
     path('edit-course/<slug:slug>/', views.create_or_edit_course, name='edit_course'),
+    path('transcribe-video/', views.transcribe_video, name='transcribe_video'),
 
     # --- Normal Users ---
     path('toggle-save-course/<int:course_id>/', views.toggle_save_course, name='toggle_save_course'),
-    path('transcribe-video/', views.transcribe_video, name='transcribe_video'),
-
+    path('schedule-course/<int:course_id>/', views.schedule_course, name='schedule_course'),
     path('<slug:slug>/', views.course, name='course'),
 ]
