@@ -179,7 +179,6 @@ def submit_quiz_answer(request):
         })
 
 
-
 @user_passes_test(normal_user_required, login_url="homepage")
 def toggle_save_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
@@ -309,7 +308,7 @@ def create_or_edit_course(request, slug=None):
             FIELD_WHITELISTS = {
                 "section": ["id", "title", "order"],
                 "text": ["id", "content_type", "text_content", "order", "section_order"],
-                "image": ["id", "content_type", "image", "alt_text", "order", "section_order"],
+                "image": ["id", "content_type", "alt_text", "order", "section_order"],
                 "video": ["id", "content_type", "video_url", "video_transcription", "order", "section_order"],
                 "quiz": ["id", "question", "correct_answer", "order", "section_order"],
             }
@@ -473,8 +472,6 @@ def create_or_edit_course(request, slug=None):
     serialized_video_contents = _serialize_json_safe(serialized_video_contents)
     serialized_quizzes = _serialize_json_safe(serialized_quizzes)
 
-    print(serialized_image_contents)
-
     section_formset = SectionFormSet(prefix=section_prefix)
     text_content_formset = TextContentFormSet(prefix=text_content_prefix)
     image_content_formset = ImageContentFormSet(prefix=image_content_prefix)
@@ -536,11 +533,19 @@ def transcribe_video(request):
                     audio_path = os.path.join(temp_dir, file)
                     break
 
-            # 2. Transcribe audio using whisper
-            model = whisper.load_model("base")  # Or "tiny" for faster, lower accuracy
+            # 2. Transcribe audio using whisper with timestamps
+            model = whisper.load_model("base")  # You can also use "tiny", "small", etc.
             result = model.transcribe(audio_path)
 
-            transcription = result.get("text", "")
+            segments = result.get("segments", [])
+            transcription = [
+                {
+                    "text": segment.get("text", "").strip(),
+                    "start": round(segment.get("start", 0.0), 2),
+                    "end": round(segment.get("end", 0.0), 2)
+                }
+                for segment in segments
+            ]
 
             return JsonResponse({
                 'status': 'success',
@@ -687,7 +692,7 @@ def _serialize_video_content_formset(video_content_formset):
             "id": form.instance.id,
             "content_type": form.instance.content_type,
             "video_url": form.instance.video_url,
-            "video_transcription": form.instance.video_transcription,
+            "video_transcription": form.instance.video_transcription if form.instance.video_transcription else [],
             "order": form.instance.order,
             "section_order": form.fields["section_order"].initial,
         }

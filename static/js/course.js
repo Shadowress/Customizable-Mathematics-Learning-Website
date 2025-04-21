@@ -192,4 +192,66 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+    // Sync Video and Transcription
+    if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+    }
+
+    const players = {};
+    const highlightIntervals = {};
+
+    window.onYouTubeIframeAPIReady = function () {
+        const iframes = document.querySelectorAll("iframe[id^='youtube-']");
+
+        iframes.forEach((iframe) => {
+            const videoId = iframe.id.split("-")[1];
+
+            players[videoId] = new YT.Player(iframe.id, {
+                events: {
+                    onReady: (event) => setupHighlighting(videoId, event.target)
+                }
+            });
+        });
+    };
+
+    function setupHighlighting(videoId, player) {
+        const segments = document.querySelectorAll(`#transcription-${videoId} .transcript-segment`);
+
+        if (!segments.length) return;
+
+        highlightIntervals[videoId] = setInterval(() => {
+            const time = player.getCurrentTime();
+
+            segments.forEach((segment) => {
+                const start = parseFloat(segment.dataset.startTime);
+                const end = parseFloat(segment.dataset.endTime);
+
+                if (time >= start && time <= end) {
+                    segment.classList.add("highlight");
+                } else {
+                    segment.classList.remove("highlight");
+                }
+            });
+        }, 300);
+    }
+
+    document.querySelectorAll(".transcript-segment").forEach(segment => {
+        segment.addEventListener("click", function () {
+            const startTime = parseFloat(this.dataset.startTime);
+            const transcriptionContainer = this.closest(".video-transcription-slideout");
+            const transcriptionId = transcriptionContainer?.id;
+
+            if (!transcriptionId) return;
+
+            const videoId = transcriptionId.replace("transcription-", "");
+            const player = players[videoId];
+
+            if (player && typeof player.seekTo === "function") {
+                player.seekTo(startTime, true);
+            }
+        });
+    });
 });

@@ -93,7 +93,7 @@ class Content(models.Model):
     image = models.ImageField(upload_to=content_upload_path, blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True, null=True)
     video_url = models.URLField(blank=True, null=True)
-    video_transcription = models.TextField(blank=True, null=True)
+    video_transcription = models.JSONField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):

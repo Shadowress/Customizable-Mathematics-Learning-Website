@@ -409,7 +409,8 @@ document.addEventListener("DOMContentLoaded", function (e) {
         .then((data) => {
             isTranscribing = false;
             if (data.status === "success") {
-                transcriptInput.value = data.transcription;
+                // Save the transcription as a formatted JSON string
+                transcriptInput.value = JSON.stringify(data.transcription, null, 2);
                 updateTranscriptionModal("✅ Transcription complete!", false, "success");
                 isDirty = true;
             } else {
@@ -430,6 +431,7 @@ document.addEventListener("DOMContentLoaded", function (e) {
             }, 2500);
         });
     }
+
 
     function updateTranscriptionModal(message, showSpinner = true, type = "info") {
         const spinner = document.getElementById("transcriptionSpinner");
@@ -742,9 +744,9 @@ document.addEventListener("DOMContentLoaded", function (e) {
         }
     });
 
-    const mainForm = document.querySelector("#main-course-form"); // Add an ID to your main form
-
     // === Track Dirty Changes in the Main Form ===
+    const mainForm = document.querySelector("#main-course-form");
+
     mainForm.querySelectorAll("input, textarea, select").forEach((el) => {
         el.addEventListener("input", () => {
             if (el.value.trim() !== "") {

@@ -289,3 +289,14 @@
     font-weight: 500;
     margin-top: 0.5rem;
 }
+
+.transcript-segment {
+    cursor: pointer;
+}
+
+.transcript-segment.highlight {
+    background-color: #f0f8ff;
+    border-left: 4px solid #0d6efd;
+    padding-left: 0.75rem;
+    transition: background-color 0.3s ease;
+}

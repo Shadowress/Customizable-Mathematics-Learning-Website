@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load static %}
+{% load time_filters %}
 
 {% block title %}
 Course
@@ -75,114 +76,6 @@ Course
         </div>
     </div>
 
-    <!-- Section Display (Wider Box but Centered) -->
-    <div class="section-display my-5">
-        {% for section in sections %}
-            <div class="section shadow-sm rounded-4 bg-white mb-4 overflow-hidden">
-                <!-- Clickable Title -->
-                <div class="section-title px-4 py-3 bg-light border-bottom d-flex justify-content-between align-items-center"
-                     role="button"
-                     data-bs-toggle="collapse"
-                     data-bs-target="#sectionBody{{ section.id }}"
-                     aria-expanded="true"
-                     aria-controls="sectionBody{{ section.id }}">
-
-                    <h5 class="mb-0 fw-semibold section-heading">
-                        Section {{ section.order|add:1 }}: {{ section.title }}
-                    </h5>
-
-                    <i class="bi bi-chevron-down toggle-icon transition"></i>
-                </div>
-
-                <!-- Section Body -->
-                <div id="sectionBody{{ section.id }}" class="section-body px-4 py-3">
-                    {% for content in section.contents|dictsort:"order" %}
-                        {% if content.type == "text" %}
-                            <div class="content-block text-content">
-                                <p>{{ content.text_content }}</p>
-                            </div>
-                        {% elif content.type == "image" %}
-                            <div class="content-block image-content">
-                                <div class="image-wrapper">
-                                    <img src="{{ content.image }}" alt="{{ content.alt_text }}">
-                                </div>
-                            </div>
-                        {% elif content.type == "video" %}
-                            <div class="content-block video-content">
-                                <div class="video-wrapper">
-                                    <iframe src="{{ content.video_url }}" frameborder="0" allowfullscreen></iframe>
-                                </div>
-
-                                <button type="button"
-                                        class="btn btn-sm btn-secondary transcription-toggle-btn mt-3 mb-2"
-                                        data-target="transcription-{{ content.id }}">
-                                    📄 Show Transcription
-                                </button>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if section.quizzes %}
-                        <div class="quiz-section">
-                            <h3 class="quiz-title">Quizzes</h3>
-
-                            {% for quiz in section.quizzes|dictsort:"order" %}
-                                <div class="quiz-block mb-4">
-                                    <label class="quiz-label d-block mb-2">
-                                        <strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}
-                                    </label>
-
-                                    <div id="quiz-input-area-{{ quiz.id }}">
-                                        {% if quiz.show_answer %}
-                                            <p class="quiz-answer">Answer: {{ quiz.placeholder }}</p>
-                                        {% else %}
-                                            <div class="quiz-input-wrapper d-flex gap-2">
-                                                <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
-
-                                                <input
-                                                    type="text"
-                                                    id="answer-input-{{ quiz.id }}"
-                                                    class="quiz-input form-control"
-                                                    placeholder="{{ quiz.placeholder }}"
-                                                    required
-                                                >
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-primary quiz-submit-btn"
-                                                >
-                                                    Submit
-                                                </button>
-                                            </div>
-
-                                            <div id="quiz-feedback-{{ quiz.id }}" class="mt-2"></div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-
-    <!-- GLOBAL VIDEO TRANSCRIPTION SLIDEOUTS -->
-    {% for video_id, transcription in video_transcriptions.items %}
-    <div id="transcription-{{ video_id }}" class="video-transcription-slideout">
-        <div class="slideout-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Video Transcription</h5>
-            <button type="button"
-                    class="transcription-close-btn"
-                    data-target="transcription-{{ video_id }}">
-                &times;
-            </button>
-        </div>
-        <div class="slideout-body p-3">
-            <p>{{ transcription }}</p>
-        </div>
-    </div>
-    {% endfor %}
-
     <!-- Schedule Course Modal -->
     <div class="modal fade" id="scheduleCourseModal" tabindex="-1" aria-labelledby="scheduleCourseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -247,8 +140,128 @@ Course
             </div>
         </div>
     </div>
+
+    <!-- Section Display (Wider Box but Centered) -->
+    <div class="section-display my-5">
+        {% for section in sections %}
+            <div class="section shadow-sm rounded-4 bg-white mb-4 overflow-hidden">
+                <!-- Clickable Title -->
+                <div class="section-title px-4 py-3 bg-light border-bottom d-flex justify-content-between align-items-center"
+                     role="button"
+                     data-bs-toggle="collapse"
+                     data-bs-target="#sectionBody{{ section.id }}"
+                     aria-expanded="true"
+                     aria-controls="sectionBody{{ section.id }}">
+
+                    <h5 class="mb-0 fw-semibold section-heading">
+                        Section {{ section.order|add:1 }}: {{ section.title }}
+                    </h5>
+
+                    <i class="bi bi-chevron-down toggle-icon transition"></i>
+                </div>
+
+                <!-- Section Body -->
+                <div id="sectionBody{{ section.id }}" class="section-body px-4 py-3">
+                    {% for content in section.contents|dictsort:"order" %}
+                        {% if content.type == "text" %}
+                            <div class="content-block text-content">
+                                <p>{{ content.text_content }}</p>
+                            </div>
+                        {% elif content.type == "image" %}
+                            <div class="content-block image-content">
+                                <div class="image-wrapper">
+                                    <img src="{{ content.image }}" alt="{{ content.alt_text }}">
+                                </div>
+                            </div>
+                        {% elif content.type == "video" %}
+                            <div class="content-block video-content">
+                                <div class="video-wrapper">
+                                    <iframe id="youtube-{{ content.id }}"
+                                            src="{{ content.video_url }}?enablejsapi=1"
+                                            frameborder="0"
+                                            allowfullscreen>
+                                    </iframe>
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary transcription-toggle-btn mt-3 mb-2"
+                                        data-target="transcription-{{ content.id }}">
+                                    📄 Show Transcription
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if section.quizzes %}
+                        <div class="quiz-section">
+                            <h3 class="quiz-title">Quizzes</h3>
+
+                            {% for quiz in section.quizzes|dictsort:"order" %}
+                                <div class="quiz-block mb-4">
+                                    <label class="quiz-label d-block mb-2">
+                                        <strong>Q{{ quiz.order|add:1 }}:</strong> {{ quiz.question }}
+                                    </label>
+
+                                    <div id="quiz-input-area-{{ quiz.id }}">
+                                        {% if quiz.show_answer %}
+                                            <p class="quiz-answer">Answer: {{ quiz.placeholder }}</p>
+                                        {% else %}
+                                            <div class="quiz-input-wrapper d-flex gap-2">
+                                                <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+
+                                                <input
+                                                    type="text"
+                                                    id="answer-input-{{ quiz.id }}"
+                                                    class="quiz-input form-control"
+                                                    placeholder="{{ quiz.placeholder }}"
+                                                    required
+                                                >
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-primary quiz-submit-btn"
+                                                >
+                                                    Submit
+                                                </button>
+                                            </div>
+
+                                            <div id="quiz-feedback-{{ quiz.id }}" class="mt-2"></div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Global Video Transcription Slideouts -->
+    {% for video_id, transcription_list  in video_transcriptions.items %}
+        <div id="transcription-{{ video_id }}" class="video-transcription-slideout">
+            <div class="slideout-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Video Transcription</h5>
+                <button type="button"
+                        class="transcription-close-btn"
+                        data-target="transcription-{{ video_id }}">
+                    &times;
+                </button>
+            </div>
+            <div class="slideout-body p-3">
+                {% for item in transcription_list %}
+                    <div class="mb-3 transcript-segment"
+                         data-start-time="{{ item.start }}"
+                         data-end-time="{{ item.end }}">
+                        <div class="fw-bold text-muted">{{ item.start|time_format }} – {{ item.end|time_format }}</div>
+                        <div>{{ item.text }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
 
 {% block script %}
     <script src="{% static 'js/course.js' %}"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 {% endblock %}
