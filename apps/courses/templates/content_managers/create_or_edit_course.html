@@ -102,7 +102,9 @@
     <!-- Hidden template for empty image content form -->
     <div id="empty-image-content-form" style="display: none;">
         <div class="image-content-form mb-4 p-3 border rounded bg-white shadow-sm">
-            <img src="" alt="Image preview" class="image-preview mb-2" style="display: none; max-width: 100%; height: auto;" />
+            <div class="d-flex justify-content-center">
+                <img src="" alt="Image preview" class="image-preview mb-2" style="display: none; max-width: 100%; height: auto;" />
+            </div>
             {{ image_content_formset.empty_form|crispy }}
             <button type="button" class="btn btn-danger mt-2 remove-content">Remove Image</button>
         </div>
@@ -111,15 +113,26 @@
     <!-- Hidden template for empty video content form -->
     <div id="empty-video-content-form" style="display: none;">
         <div class="video-content-form mb-4 p-3 border rounded bg-white shadow-sm">
-            <iframe
-                class="video-preview mb-2"
-                style="display: none; width: 100%; max-width: 560px; height: 315px;"
-                frameborder="0"
-                allowfullscreen>
-            </iframe>
+            <div class="d-flex justify-content-center">
+                <iframe
+                    class="video-preview mb-2"
+                    style="display: none; width: 100%; max-width: 560px; height: 315px;"
+                    frameborder="0"
+                    allowfullscreen>
+                </iframe>
+            </div>
 
             <!-- Form fields from formset -->
             {{ video_content_formset.empty_form|crispy }}
+
+            <!-- Video Transcription -->
+            <label>Video Transcription</label>
+            <div class="transcription-editor mt-3"></div>
+
+            <!-- ➕ Add Transcription Row Button -->
+            <button type="button" class="btn btn-secondary mt-2 add-transcription-row">
+                ➕ Add Transcription
+            </button>
 
             <!-- Transcription Button -->
             <button type="button" class="btn btn-primary mt-2 transcribe-video">
@@ -128,6 +141,18 @@
 
             <!-- Remove Button -->
             <button type="button" class="btn btn-danger mt-2 remove-content">Remove Video</button>
+        </div>
+    </div>
+
+    <!-- 🔒 Hidden template for one transcription row -->
+    <div id="transcription-row-template" style="display: none;">
+        <div class="transcription-row mb-3 p-2 border rounded bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                <input type="text" class="form-control start-time-input" placeholder="Start Time (e.g. 1:23 or 1:02:45)">
+                <input type="text" class="form-control end-time-input" placeholder="End Time (e.g. 1:23 or 1:02:45)">
+                <button type="button" class="btn btn-danger btn-sm remove-transcription-row">Remove</button>
+            </div>
+            <textarea class="form-control transcription-text" placeholder="Transcription text..."></textarea>
         </div>
     </div>
 

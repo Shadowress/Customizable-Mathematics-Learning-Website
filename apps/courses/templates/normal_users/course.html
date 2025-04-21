@@ -250,9 +250,9 @@ Course
             <div class="slideout-body p-3">
                 {% for item in transcription_list %}
                     <div class="mb-3 transcript-segment"
-                         data-start-time="{{ item.start }}"
-                         data-end-time="{{ item.end }}">
-                        <div class="fw-bold text-muted">{{ item.start|time_format }} – {{ item.end|time_format }}</div>
+                         data-start-time="{{ item.start_time }}"
+                         data-end-time="{{ item.end_time }}">
+                        <div class="fw-bold text-muted">{{ item.start_time|time_format }} – {{ item.end_time|time_format }}</div>
                         <div>{{ item.text }}</div>
                     </div>
                 {% endfor %}

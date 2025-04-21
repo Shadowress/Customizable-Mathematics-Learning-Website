@@ -74,7 +74,7 @@ class VideoContentForm(forms.ModelForm):
                 attrs={'placeholder': 'YouTube video URL', 'pattern': r'https?://(www\.)?(youtube\.com|youtu\.be)/.+',
                        'title': 'Only YouTube URLs allowed'}
             ),
-            'video_transcription': forms.Textarea(attrs={'placeholder': 'Transcription for the video'}),
+            'video_transcription': forms.HiddenInput(),
             'order': forms.HiddenInput(),
         }
 

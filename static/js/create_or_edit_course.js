@@ -247,6 +247,20 @@ document.addEventListener("DOMContentLoaded", function (e) {
         updateOrder(currentSection, ".quiz-form", "-order");
     }
 
+    function addTranscriptionRow(videoContentForm) {
+        const transcriptionEditor = videoContentForm.querySelector(".transcription-editor");
+        const template = document.getElementById("transcription-row-template");
+
+        if (!template || !transcriptionEditor) return;
+
+        const newRow = template.firstElementChild.cloneNode(true);
+        transcriptionEditor.appendChild(newRow);
+    }
+
+    function removeTranscriptionRow(rowElement) {
+        rowElement.remove();
+    }
+
     function renderContentOrQuiz(contentType, dataList) {
         dataList.forEach((data, index) => {
             const sectionOrder = data.section_order;
@@ -263,6 +277,7 @@ document.addEventListener("DOMContentLoaded", function (e) {
 
             let container;
             let templateId;
+            let formsetPrefix;
 
             switch (contentType) {
                 case "text":
@@ -331,11 +346,9 @@ document.addEventListener("DOMContentLoaded", function (e) {
 
                 case "video":
                     const videoInput = formElement.querySelector('input[type="url"][name$="-video_url"]');
-                    const transcriptInput = formElement.querySelector('textarea[name$="-video_transcription"]');
                     const videoPreview = formElement.querySelector('iframe.video-preview');
 
                     if (videoInput) videoInput.value = data.video_url || "";
-                    if (transcriptInput) transcriptInput.value = data.video_transcription || "";
 
                     if (videoPreview && data.video_url) {
                         const videoId = extractYouTubeVideoID(data.video_url);
@@ -346,6 +359,28 @@ document.addEventListener("DOMContentLoaded", function (e) {
                             videoPreview.src = '';
                             videoPreview.style.display = 'none';
                         }
+                    }
+
+                    const transcriptionEditor = formElement.querySelector('.transcription-editor');
+
+                    if (data.video_transcription && data.video_transcription.length > 0) {
+                        data.video_transcription.forEach((segment) => {
+                            addTranscriptionRow(formElement);  // Pass the full video form
+
+                            const newRow = transcriptionEditor.lastElementChild;
+
+                            const inputs = newRow.querySelectorAll("input");
+                            const textarea = newRow.querySelector("textarea");
+
+                            if (inputs.length >= 2 && textarea) {
+                                inputs[0].value = formatTime(segment.start_time) || "";
+                                inputs[1].value = formatTime(segment.end_time) || "";
+                                textarea.value = segment.text || "";
+                            }
+                        });
+                    } else {
+                        // No transcription data, load an empty transcription row
+                        addTranscriptionRow(transcriptionEditor);
                     }
                     break;
 
@@ -381,11 +416,6 @@ document.addEventListener("DOMContentLoaded", function (e) {
         currentModal = new bootstrap.Modal(modalElement);
         currentModal.show();
 
-        if (!videoInput || !transcriptInput) {
-            updateTranscriptionModal("❌ Input fields not found.", false, "error");
-            return;
-        }
-
         const videoURL = videoInput.value.trim();
         if (!videoURL) {
             updateTranscriptionModal("❗ Please enter a YouTube video URL first.", false, "error");
@@ -408,9 +438,32 @@ document.addEventListener("DOMContentLoaded", function (e) {
         .then((response) => response.json())
         .then((data) => {
             isTranscribing = false;
-            if (data.status === "success") {
-                // Save the transcription as a formatted JSON string
-                transcriptInput.value = JSON.stringify(data.transcription, null, 2);
+
+            if (data.status === "success" && Array.isArray(data.transcription)) {
+                const transcriptionEditor = videoForm.querySelector(".transcription-editor");
+                if (!transcriptionEditor) {
+                    updateTranscriptionModal("❌ Transcription editor not found.", false, "error");
+                    return;
+                }
+
+                // Clear all existing transcription rows
+                transcriptionEditor.innerHTML = "";
+
+                // Add new rows for each transcription entry
+                data.transcription.forEach(segment => {
+                    addTranscriptionRow(videoForm);
+                    const newRow = transcriptionEditor.lastElementChild;
+
+                    const inputs = newRow.querySelectorAll("input");
+                    const textarea = newRow.querySelector("textarea");
+
+                    if (inputs.length >= 2 && textarea) {
+                        inputs[0].value = formatTime(segment.start);  // Format start time
+                        inputs[1].value = formatTime(segment.end);    // Format end time
+                        textarea.value = segment.text;
+                    }
+                });
+
                 updateTranscriptionModal("✅ Transcription complete!", false, "success");
                 isDirty = true;
             } else {
@@ -431,7 +484,6 @@ document.addEventListener("DOMContentLoaded", function (e) {
             }, 2500);
         });
     }
-
 
     function updateTranscriptionModal(message, showSpinner = true, type = "info") {
         const spinner = document.getElementById("transcriptionSpinner");
@@ -470,6 +522,21 @@ document.addEventListener("DOMContentLoaded", function (e) {
                     currentModal.hide();
                 }
             };
+        }
+    }
+
+    function formatTime(seconds) {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+
+        const paddedSecs = secs.toString().padStart(2, "0");
+
+        if (hrs > 0) {
+            const paddedMins = mins.toString().padStart(2, "0");
+            return `${hrs}:${paddedMins}:${paddedSecs}`;
+        } else {
+            return `${mins}:${paddedSecs}`;
         }
     }
 
@@ -614,6 +681,68 @@ document.addEventListener("DOMContentLoaded", function (e) {
         }
     }
 
+    function validateVideoTranscriptions() {
+        const videoForms = document.querySelectorAll(".video-content-form");
+
+        const timeFormatRegex = /^(?:\d{1,2}:)?[0-5]?\d:[0-5]\d$/;  // mm:ss or hh:mm:ss
+
+        for (const videoForm of videoForms) {
+            if (isDeleted(videoForm) || isInsideTemplate(videoForm)) continue;
+
+            const transcriptionRows = videoForm.querySelectorAll(".transcription-editor .transcription-row");
+
+            // Get parent section's title (e.g. "Section 2")
+            const sectionForm = videoForm.closest(".section-form");
+            const sectionTitle = sectionForm?.querySelector(".section-title")?.textContent?.trim() || "Unknown Section";
+
+            if (transcriptionRows.length === 0) {
+                alert(`${sectionTitle}: Please add at least one transcription row for each video.`);
+                return false;
+            }
+
+            for (const row of transcriptionRows) {
+                const startInput = row.querySelector(".start-time-input");
+                const endInput = row.querySelector(".end-time-input");
+                const textArea = row.querySelector(".transcription-text");
+
+                const startTime = startInput?.value.trim() || "";
+                const endTime = endInput?.value.trim() || "";
+                const text = textArea?.value.trim() || "";
+
+                if (!startTime || !endTime || !text) {
+                    alert(`Section ${sectionNumber}: All transcription fields (start time, end time, text) must be filled.`);
+                    startInput?.focus();
+                    return false;
+                }
+
+                if (!timeFormatRegex.test(startTime)) {
+                    alert(`Section ${sectionNumber}: Invalid start time format "${startTime}". Use hh:mm:ss or mm:ss.`);
+                    startInput.focus();
+                    return false;
+                }
+
+                if (!timeFormatRegex.test(endTime)) {
+                    alert(`Section ${sectionNumber}: Invalid end time format "${endTime}". Use hh:mm:ss or mm:ss.`);
+                    endInput.focus();
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    function parseTimeToSeconds(timeStr) {
+        const parts = timeStr.split(":").map(Number).reverse();
+        let seconds = 0;
+
+        if (parts.length >= 1) seconds += parts[0];             // seconds
+        if (parts.length >= 2) seconds += parts[1] * 60;        // minutes
+        if (parts.length >= 3) seconds += parts[2] * 3600;      // hours
+
+        return seconds;
+    }
+
     // === Set Current Active Section on Click ===
     sectionContainer.addEventListener("click", (event) => {
         const clickedSection = event.target.closest(".section-form");
@@ -660,6 +789,19 @@ document.addEventListener("DOMContentLoaded", function (e) {
                 deleteContentOrQuiz(quizDiv);
             }
             updateQuizOrder();
+        }
+    });
+
+    // === Add and Remove Transcription Row ===
+    document.body.addEventListener("click", function (event) {
+        if (event.target.classList.contains("add-transcription-row")) {
+            const videoContentForm = event.target.closest(".video-content-form");
+            addTranscriptionRow(videoContentForm);
+        }
+
+        if (event.target.classList.contains("remove-transcription-row")) {
+            const row = event.target.closest(".transcription-row");
+            if (row) removeTranscriptionRow(row);
         }
     });
 
@@ -787,8 +929,14 @@ document.addEventListener("DOMContentLoaded", function (e) {
                 e.preventDefault();
 
                 if (value === "publish") {
-                    const isValid = validateCourseBeforeSave();
-                    if (!isValid) {
+                    const isValidContent = validateCourseBeforeSave();
+                    if (!isValidContent) {
+                        isSubmitting = false;
+                        return;
+                    }
+
+                    const isValidTranscriptions = validateVideoTranscriptions();
+                    if (!isValidTranscriptions) {
                         isSubmitting = false;
                         return;
                     }
@@ -799,6 +947,39 @@ document.addEventListener("DOMContentLoaded", function (e) {
                     const videoId = extractYouTubeVideoID(input.value);
                     if (videoId) {
                         input.value = `https://www.youtube.com/embed/${videoId}`;
+                    }
+                });
+
+                const videoForms = document.querySelectorAll(".video-content-form");
+                videoForms.forEach((videoForm, index) => {
+                    if (isDeleted(videoForm) || isInsideTemplate(videoForm)) return;
+
+                    const transcriptionRows = videoForm.querySelectorAll(".transcription-editor .transcription-row");
+                    const transcriptionData = [];
+
+                    transcriptionRows.forEach(row => {
+                        const startInput = row.querySelector(".start-time-input");
+                        const endInput = row.querySelector(".end-time-input");
+                        const textArea = row.querySelector(".transcription-text");
+
+                        const startTimeStr = startInput?.value.trim();
+                        const endTimeStr = endInput?.value.trim();
+                        const text = textArea?.value.trim();
+
+                        if (startTimeStr && endTimeStr && text) {
+                            transcriptionData.push({
+                                start_time: parseTimeToSeconds(startTimeStr),
+                                end_time: parseTimeToSeconds(endTimeStr),
+                                text: text
+                            });
+                        }
+                    });
+
+                    const transcriptionJSON = transcriptionData.length > 0 ? JSON.stringify(transcriptionData) : "null";
+
+                    const hiddenInput = videoForm.querySelector(`input[name$='-video_transcription']`);
+                    if (hiddenInput) {
+                        hiddenInput.value = transcriptionJSON;
                     }
                 });
 
