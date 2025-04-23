@@ -145,16 +145,17 @@ def submit_quiz_answer(request):
 
     correct_answer = (quiz.correct_answer or "").strip()
     is_correct = user_answer == correct_answer.lower()
+    reload_required = False
 
     if is_correct:
         Answer.objects.get_or_create(user=user, quiz=quiz)
 
-        # If the user has answered all quizzes in the course, mark it as completed
         course_quizzes = Quiz.objects.filter(section__course=quiz.section.course)
         answered_quizzes = Answer.objects.filter(user=user, quiz__in=course_quizzes)
 
         if answered_quizzes.count() == course_quizzes.count():
             user.completed_courses.add(quiz.section.course)
+            reload_required = True
 
             ScheduledCourse.objects.filter(
                 user=user,
@@ -168,6 +169,7 @@ def submit_quiz_answer(request):
             "message": "Correct!",
             "quiz_id": quiz.id,
             "correct_answer": correct_answer,
+            "reload": reload_required
         })
 
     else:
@@ -176,6 +178,7 @@ def submit_quiz_answer(request):
             "is_correct": False,
             "message": "Incorrect answer.",
             "quiz_id": quiz.id,
+            "reload": False
         })
 
 
@@ -624,15 +627,12 @@ def _clean_for_json(data, allowed_fields=None):
     for key in allowed_fields or data.keys():
         value = data.get(key)
 
-        # Handle model instances (e.g. Section or Course)
         if hasattr(value, 'pk'):
             cleaned[key] = value.pk
 
-        # Handle UploadedFile/FileField/ImageField
         elif hasattr(value, 'url'):
             cleaned[key] = value.url
 
-        # Handle everything else (assume JSON-serializable)
         else:
             cleaned[key] = value
 

@@ -2,9 +2,7 @@
 
 {% load static %}
 
-{% block title %}
-Dashboard
-{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block css %}
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
@@ -52,12 +50,19 @@ Dashboard
                     {% for course in courses %}
                         <div class="col">
                             <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
-                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
-                                    <div class="card-body position-relative p-4">
+                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden" style="min-height: 180px;">
+                                    <div class="card-body position-relative p-4 d-flex flex-column">
                                         <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
 
-                                        {% if course.is_saved %}
-                                            <span class="position-absolute top-0 end-0 m-2" style="font-size: 1.5rem; color: gold;">★</span>
+                                        {% if course.is_completed or course.is_saved %}
+                                            <div class="position-absolute top-0 end-0 m-2 d-flex flex-row-reverse align-items-center gap-2">
+                                                {% if course.is_completed %}
+                                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                                {% endif %}
+                                                {% if course.is_saved %}
+                                                    <i class="bi bi-star-fill" style="font-size: 1.5rem; color: gold;"></i>
+                                                {% endif %}
+                                            </div>
                                         {% endif %}
 
                                         <p class="card-text text-muted">{{ course.description|truncatechars:100 }}</p>

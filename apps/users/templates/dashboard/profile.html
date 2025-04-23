@@ -3,9 +3,7 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
-{% block title %}
-Profile
-{% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block css %}
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
@@ -20,7 +18,7 @@ Profile
         <!-- Edit Button -->
         <img src="{% static 'img/edit_button.png' %}" id="edit-btn" onclick="toggleEdit()" alt="Edit">
 
-        <div class="row align-items-center" style="height: 350px;">
+        <div class="row align-items-center" style="height: 400px;">
             <!-- Profile Picture -->
             <div class="col-md-3 text-center mb-3 mb-md-0">
                 <form id="profile-picture-form" method="POST" enctype="multipart/form-data">
@@ -93,12 +91,19 @@ Profile
                 {% for course in published_completed_courses %}
                     <div class="col">
                         <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
-                            <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
-                                <div class="card-body position-relative p-4">
+                            <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden" style="min-height: 180px;">
+                                <div class="card-body position-relative p-4 d-flex flex-column">
                                     <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
 
-                                    {% if course.is_saved %}
-                                        <span class="position-absolute top-0 end-0 m-2" style="font-size: 1.5rem; color: gold;">★</span>
+                                    {% if course in saved_courses or course in completed_courses %}
+                                        <div class="position-absolute top-0 end-0 m-2 d-flex flex-row-reverse align-items-center gap-2">
+                                            {% if course in completed_courses %}
+                                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                            {% endif %}
+                                            {% if course in saved_courses %}
+                                                <i class="bi bi-star-fill" style="font-size: 1.5rem; color: gold;"></i>
+                                            {% endif %}
+                                        </div>
                                     {% endif %}
 
                                     <p class="card-text text-muted">{{ course.description|truncatechars:100 }}</p>

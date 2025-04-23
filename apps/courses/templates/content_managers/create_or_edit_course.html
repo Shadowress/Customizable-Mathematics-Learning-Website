@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block title %}Create Course{% endblock %}
+{% block title %}Create or Edit Course{% endblock %}
 
 {% block css %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -122,24 +122,17 @@
                 </iframe>
             </div>
 
-            <!-- Form fields from formset -->
             {{ video_content_formset.empty_form|crispy }}
 
-            <!-- Video Transcription -->
             <label>Video Transcription</label>
             <div class="transcription-editor mt-3"></div>
 
-            <!-- ➕ Add Transcription Row Button -->
             <button type="button" class="btn btn-secondary mt-2 add-transcription-row">
                 ➕ Add Transcription
             </button>
-
-            <!-- Transcription Button -->
             <button type="button" class="btn btn-primary mt-2 transcribe-video">
                 Auto Transcription
             </button>
-
-            <!-- Remove Button -->
             <button type="button" class="btn btn-danger mt-2 remove-content">Remove Video</button>
         </div>
     </div>

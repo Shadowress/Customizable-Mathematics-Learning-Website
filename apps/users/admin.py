@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
@@ -36,23 +38,22 @@ class CustomUserAdmin(UserAdmin):
 
         return self.readonly_fields + ("is_active",)
 
-    # todo uncomment during production
-    # def get_actions(self, request) -> dict | dict[Any, tuple[Any, Any, Any]]:
-    #     """Remove delete action from the admin list page"""
-    #     actions = super().get_actions(request)
-    #     if "delete_selected" in actions:
-    #         del actions["delete_selected"]
-    #     return actions
-    #
-    # def get_model_perms(self, request) -> dict[str, Any]:
-    #     """Remove the delete section in the user details page"""
-    #     perms = super().get_model_perms(request)
-    #     perms["delete"] = False  # This removes the delete button
-    #     return perms
-    #
-    # def has_delete_permission(self, request, obj=None) -> bool:
-    #     """Completely remove the delete button from user details page"""
-    #     return False
+    def get_actions(self, request) -> dict | dict[Any, tuple[Any, Any, Any]]:
+        """Remove delete action from the admin list page"""
+        actions = super().get_actions(request)
+        if "delete_selected" in actions:
+            del actions["delete_selected"]
+        return actions
+
+    def get_model_perms(self, request) -> dict[str, Any]:
+        """Remove the delete section in the user details page"""
+        perms = super().get_model_perms(request)
+        perms["delete"] = False  # This removes the delete button
+        return perms
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        """Completely remove the delete button from user details page"""
+        return False
 
     def add_view(self, request, form_url='', extra_context=None):
         """Change the title of the Add User page to 'Add Content Manager'."""

@@ -76,6 +76,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 const feedbackContainer = document.getElementById(`quiz-feedback-${quizId}`);
                 feedbackContainer.innerHTML = `<p class="text-danger">${data.message || "Something went wrong."}</p>`;
             }
+
+            if (data.reload) {
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
         })
         .catch(error => {
             console.error("Error submitting answer:", error);

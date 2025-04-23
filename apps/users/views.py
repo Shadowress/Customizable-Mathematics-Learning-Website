@@ -336,6 +336,7 @@ def dashboard(request) -> HTTPResponse:
         )
 
     user_saved_courses = request.user.saved_courses.all()
+    user_completed_courses = request.user.completed_courses.all()
 
     if saved_only:
         courses_qs = courses_qs.filter(id__in=user_saved_courses.values_list('id', flat=True))
@@ -348,6 +349,7 @@ def dashboard(request) -> HTTPResponse:
             "slug": course.slug,
             "difficulty": course.get_difficulty_display(),
             "is_saved": course in user_saved_courses,
+            "is_completed": course in user_completed_courses,
         })
 
     scheduled_courses = ScheduledCourse.objects.filter(
@@ -380,11 +382,15 @@ def profile(request):
             return redirect("profile")
 
     published_completed_courses = request.user.completed_courses.filter(status='published')
+    user_saved_courses = request.user.saved_courses.all()
+    user_completed_courses = request.user.completed_courses.all()
 
     return render(request, "dashboard/profile.html", {
         "normal_user_header_included": True,
         "form": form,
         "published_completed_courses": published_completed_courses,
+        "saved_courses": user_saved_courses,
+        "completed_courses": user_completed_courses,
     })
 
 

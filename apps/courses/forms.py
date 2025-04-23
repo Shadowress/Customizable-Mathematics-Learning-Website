@@ -105,7 +105,6 @@ class QuizForm(forms.ModelForm):
         }
 
 
-# Inline formset for Section and its contents (text, image, or video)
 SectionFormSet = inlineformset_factory(
     Course,
     Section,
