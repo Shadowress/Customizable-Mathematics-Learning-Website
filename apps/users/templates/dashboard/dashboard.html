@@ -14,9 +14,9 @@
 
 {% block content %}
     <!-- Container for centering content -->
-    <div class="container-xl">
+    <div class="container">
         <!-- Search and Filter Form -->
-        <div class="row justify-content-center mb-4 dashboard-search-filter" style="margin-top: 20px">
+        <div class="row justify-content-center mb-4 dashboard-search-filter">
             <div class="col-md-10">
                 <form id="searchForm" method="GET" action="" class="d-flex flex-wrap align-items-center justify-content-center gap-2">
                     <input type="hidden" name="saved_only" id="savedOnlyInput" value="{% if saved_only %}true{% else %}false{% endif %}">
@@ -45,22 +45,22 @@
         <!-- Courses and Scheduled Display -->
         <div class="row justify-content-between">
             <!-- Left Column: Courses -->
-            <div class="col-lg-7">
+            <div class="col-12 col-md-12 col-lg-7">
                 <div class="row row-cols-1 row-cols-md-2 g-4">
                     {% for course in courses %}
                         <div class="col">
                             <a href="{% url 'course' course.slug %}" class="text-decoration-none">
-                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden schedule-card" style="min-height: 180px;">
-                                    <div class="card-body position-relative p-4 d-flex flex-column">
+                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
+                                    <div class="card-body position-relative d-flex flex-column">
                                         <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
 
                                         {% if course.is_completed or course.is_saved %}
                                             <div class="position-absolute top-0 end-0 m-2 d-flex flex-row-reverse align-items-center gap-2">
                                                 {% if course.is_completed %}
-                                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;"></i>
                                                 {% endif %}
                                                 {% if course.is_saved %}
-                                                    <i class="bi bi-star-fill" style="font-size: 1.5rem; color: gold;"></i>
+                                                    <i class="bi bi-star-fill" style="font-size: 1.2rem; color: gold;"></i>
                                                 {% endif %}
                                             </div>
                                         {% endif %}
@@ -86,25 +86,25 @@
                             </a>
                         </div>
                     {% empty %}
-                        <p class="text-muted">No courses available.</p>
+                        <p>No courses available.</p>
                     {% endfor %}
                 </div>
             </div>
 
             <!-- Right Column: Scheduled Courses -->
-            <div class="col-lg-3 ms-auto" style="padding-right: 20px;">
+            <div class="col-12 col-md-12 col-lg-3 ms-auto" style="padding-right: 20px;">
                 <div class="card shadow-sm border-0 rounded-4 p-3 schedule-card">
-                    <h5 class="card-title mb-3 fs-5">📅 Scheduled Courses</h5> <!-- Smaller font size -->
+                    <h5 class="card-title mb-3">📅 Scheduled Courses</h5>
 
                     {% if scheduled_courses %}
                         <ul class="list-group list-group-flush">
                             {% for item in scheduled_courses %}
                                 <li class="list-group-item d-flex justify-content-between align-items-start p-2">
                                     <div class="ms-2 me-auto">
-                                        <div class="fw-semibold fs-6">{{ item.course.title }}</div> <!-- Smaller font size -->
-                                        <small style="font-size: 0.75rem;">{{ item.scheduled_time|date:"l, j F Y, g:i A" }}</small>
+                                        <div class="fw-semibold">{{ item.course.title }}</div>
+                                        <small class="mt-1 d-block">{{ item.scheduled_time|date:"l, j F Y, g:i A" }}</small>
                                     </div>
-                                    <a href="{% url 'course' item.course.slug %}" class="badge bg-primary text-decoration-none py-1 px-2">View</a> <!-- Smaller button -->
+                                    <a href="{% url 'course' item.course.slug %}" class="badge text-decoration-none py-1 px-2">View</a> <!-- Smaller button -->
                                 </li>
                             {% endfor %}
                         </ul>

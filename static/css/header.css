@@ -7,7 +7,6 @@
 }
 
 .site-header .navbar-brand {
-    font-size: 1.5rem;
     font-weight: bold;
     color: var(--text-color);
     text-decoration: none;
@@ -18,7 +17,6 @@
 .site-header .username-text {
     color: var(--text-color);
     font-weight: 600;
-    font-size: 1rem;
 }
 
 .site-header .profile-link {
@@ -34,7 +32,6 @@
 }
 
 .site-header form button {
-    font-size: 0.875rem;
     font-weight: 600;
     padding: 0.5rem 1rem;
     background-color: var(--primary-color);
@@ -67,6 +64,9 @@
     background-color: var(--secondary-color) !important;
     color: white !important;
     border: none !important;
+    font-size: 1rem !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
 }
 
 #logout-btn {
@@ -77,7 +77,6 @@
 
 /* Toggle button */
 #dark-mode-toggle {
-    font-size: 0.85rem;
     transition: background-color 0.3s ease;
     background-color: var(--secondary-color) !important;
     color: white !important;
@@ -86,7 +85,6 @@
 
 /* Accessibility Button */
 #accessibility-btn {
-    font-size: 1rem;
     padding: 0.75rem 1.25rem;
     border-radius: 20px;
     background-color: var(--secondary-color) !important;
@@ -102,9 +100,14 @@
 }
 
 #accessibility-menu label {
-    font-size: 0.9rem;
     color: var(--text-color);
     margin-bottom: 0.5rem;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button;
+    margin: 0;
 }
 
 #accessibility-menu .form-control {
@@ -119,7 +122,6 @@
 }
 
 #accessibility-menu .form-select {
-    font-size: 1rem;
     border: 2px solid var(--border-color);
     border-radius: 0.5rem;
     background-color: var(--section-bg-color);
@@ -131,7 +133,6 @@
 }
 
 #accessibility-menu input[type="number"] {
-    font-size: 1rem;
     padding: 0.5rem;
     border-radius: 0.5rem;
 }
@@ -174,7 +175,6 @@
 
 /* Default Button Styling */
 #save-btn {
-    font-size: 1rem;
     font-weight: 600;
     padding: 0.75rem 1.25rem;
     border-radius: 50px;
@@ -254,13 +254,11 @@
 
 /* Form elements spacing & look */
 #accessibility-menu .form-label {
-    font-size: 0.9rem;
     font-weight: 500;
 }
 
 #accessibility-menu .form-control,
 #accessibility-menu .form-select {
-    font-size: 0.9rem;
     padding: 6px 10px;
     border-radius: 8px;
 }

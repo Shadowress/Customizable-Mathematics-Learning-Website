@@ -33,6 +33,8 @@
 
 /* Profile Picture */
 .profile-picture-img {
+    width: 250px;
+    height: 250px;
     border-radius: 50%;
     object-fit: cover;
     border: 4px solid #dee2e6;
@@ -59,9 +61,7 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Badge Styles */
 .badge {
-    font-size: 0.75rem;
     padding: 0.4rem 0.6rem;
     border-radius: 12px;
 }
@@ -86,6 +86,8 @@
     transition: transform 0.2s ease, box-shadow 0.3s ease;
     background-color: var(--section-bg-color);
     color: var(--text-color);
+    padding: 20px;
+    min-height: 250px;
 }
 
 .course-card-hover:hover {
@@ -93,37 +95,57 @@
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
 }
 
-/* Card Title */
-.course-card-hover .card-title {
-    font-size: 1.25rem;
-}
-
 /* Description */
 .course-card-hover .card-text {
-    font-size: 0.95rem;
     color: var(--text-color);
 }
 
-/* Difficulty Badge */
 .badge {
-    font-size: 0.85rem;
     border-radius: 0.5rem;
     padding: 0.35em 0.75em;
 }
 
-/* Responsive Spacing */
-@media (max-width: 768px) {
-    .profile-container {
-        padding: 1rem;
-    }
-
+@media (max-width: 1024px) {
     #edit-btn {
-        top: 1rem;
-        right: 1rem;
+        width: 50px;
+        height: 50px;
     }
 
-    .profile-picture {
-        width: 200px !important;
-        height: 200px !important;
+    /* Profile image sizing and centering */
+    .profile-picture-img {
+        width: 180px !important;
+        height: 180px !important;
+    }
+
+    /* Adjust row to stack vertically */
+    .profile-container .row {
+        flex-direction: column;
+        align-items: center;
+        height: auto !important;
+    }
+
+    /* Ensure card widths adjust on small screens */
+    .view-mode, .edit-mode {
+        width: 100% !important;
+    }
+
+    /* Padding adjustments for completed course cards */
+    .card-body.p-4 {
+        padding: 1rem !important;
+    }
+
+    /* Reduce icon sizes slightly */
+    .bi-check-circle-fill, .bi-star-fill {
+        font-size: 1.25rem !important;
+    }
+
+    /* Slight padding for completed courses section */
+    .container.mt-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .completed-courses {
+        width: 100%;
     }
 }

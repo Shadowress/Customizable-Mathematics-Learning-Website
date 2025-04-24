@@ -1,24 +1,31 @@
-body {
-    color: var(--text-color);
-    font-family: var(--font-family-base);
-    font-size: var(--user-font-size);
-    line-height: var(--user-spacing);
-}
-
 hr {
     border: none;
     border-top: 2px solid var(--text-color);
     margin: 1rem 0;
 }
 
+.save-btn {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.save-btn:hover {
+    filter: none;
+}
+
 .course-display {
     background-color: var(--section-bg-color);
     border-bottom: 1px solid var(--border-color);
-    width: 100vw;
+    overflow-x: hidden;
+}
+
+.course-display .container {
+    overflow-x: hidden;
 }
 
 .course-display h1 {
-    font-size: 2.5rem;
     color: var(--secondary-color);
 }
 
@@ -27,7 +34,6 @@ hr {
 }
 
 .badge {
-    font-size: 0.9rem;
     padding: 0.5em 1em;
     border-radius: 50px;
 }
@@ -51,8 +57,6 @@ hr {
 
 .section-heading {
     color: var(--secondary-color);
-    font-size: 1.1rem;
-    letter-spacing: 0.4px;
 }
 
 .section-title[aria-expanded="true"] .toggle-icon {
@@ -95,7 +99,6 @@ hr {
 }
 
 .text-content p {
-    font-size: 1rem;
     color: var(--text-color);
     line-height: 1.6;
 }
@@ -192,7 +195,6 @@ hr {
     overflow-y: auto;
     flex-grow: 1;
     padding: 1rem 1.5rem;
-    font-size: 0.95rem;
     line-height: 1.6;
     background-color: var(--section-bg-color);
 }
@@ -201,10 +203,10 @@ hr {
     position: absolute;
     top: 8px;
     right: 16px;
+    font-size: 30px !important;
     background: none;
     border: none;
     color: #dc3545;
-    font-size: 2rem;
     line-height: 1;
     cursor: pointer;
     padding: 0;
@@ -245,7 +247,6 @@ hr {
 }
 
 .quiz-title {
-    font-size: 1.5rem;
     font-weight: 600;
     color: var(--secondary-color);
     margin-bottom: 1rem;
@@ -258,7 +259,6 @@ hr {
 .quiz-label {
     display: block;
     margin-bottom: 0.5rem;
-    font-size: 1.05rem;
     color: var(--text-color);
 }
 
@@ -285,16 +285,15 @@ hr {
     border: none;
     padding: 0.45rem 1rem;
     border-radius: 0.5rem;
-    font-size: 0.95rem;
     transition: background-color 0.3s, transform 0.1s ease;
     white-space: nowrap;
     height: 100%;
 }
 
 .quiz-answer {
-    background-color: #e9f7ef;
+    background-color: color-mix(in srgb, var(--success-color) 25%, white);
     padding: 0.5rem;
-    border-left: 4px solid #28a745;
+    border-left: 4px solid var(--success-color);
     border-radius: 0.4rem;
     font-weight: 500;
     color: var(--success-color);
@@ -313,7 +312,6 @@ hr {
 }
 
 .transcript-segment div:first-child {
-    font-size: 0.9rem;
     color: var(--secondary-color);
 }
 
@@ -357,15 +355,28 @@ button[type="submit"].btn-primary {
 
 @media (max-width: 768px) {
     .section-title {
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+
+    .section-title .toggle-icon {
+        align-self: flex-end;
+    }
+
+    #scheduledView .d-flex.gap-2 {
         flex-direction: column;
-        align-items: flex-start;
+    }
+
+    .transcription-close-btn {
+
+    }
+
+    .course-display {
+        padding: 2rem 1rem !important;
     }
 
     .course-display .d-flex {
-        flex-direction: column !important;
-    }
-
-    .course-display .btn {
-        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
     }
 }

@@ -36,7 +36,6 @@
                                  {% static 'img/default_profile.png' %}
                              {% endif %}"
                              alt="Profile Picture"
-                             style="width: 250px; height: 250px;"
                         >
                     </label>
                     <input type="file" id="id_profile_picture" class="hidden" name="profile_picture" accept="image/*">
@@ -49,15 +48,13 @@
                     <div class="card p-4 shadow-sm border-0">
                         <h4 class="mb-3">Account Info</h4>
 
-                        <div class="mb-2">
-                            <strong>Username:</strong>
-                            <span class="ms-2">{{ user.username }}</span>
+                        <div class="mb-2 d-block">
+                            <strong>Username:</strong> {{ user.username }}
                         </div>
 
                         {% if user.date_of_birth %}
-                            <div>
-                                <strong>Date of Birth:</strong>
-                                <span class="ms-2">{{ user.date_of_birth }}</span>
+                            <div class="d-block">
+                                <strong>Date of Birth:</strong> {{ user.date_of_birth }}
                             </div>
                         {% endif %}
                     </div>
@@ -92,9 +89,9 @@
         {% if published_completed_courses %}
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
                 {% for course in published_completed_courses %}
-                    <div class="col">
+                    <div class="col completed-courses">
                         <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
-                            <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden" style="min-height: 180px;">
+                            <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden">
                                 <div class="card-body position-relative p-4 d-flex flex-column">
                                     <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
 
