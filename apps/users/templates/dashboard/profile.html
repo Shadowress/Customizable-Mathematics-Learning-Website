@@ -16,7 +16,10 @@
 {% block content %}
     <div class="container-fluid profile-container">
         <!-- Edit Button -->
-        <img src="{% static 'img/edit_button.png' %}" id="edit-btn" onclick="toggleEdit()" alt="Edit">
+        <div class="edit-button">
+            <img src="{% static 'img/edit_button.png' %}" id="edit-btn" onclick="toggleEdit()" alt="Edit">
+            <img src="{% static 'img/edit_button_dark.png' %}" id="edit-btn" onclick="toggleEdit()" alt="Edit">
+        </div>
 
         <div class="row align-items-center" style="height: 400px;">
             <!-- Profile Picture -->
@@ -25,7 +28,7 @@
                     {% csrf_token %}
                     <label for="id_profile_picture">
                         <img id="profile-preview"
-                             class="profile-picture"
+                             class="profile-picture-img"
                              src="
                              {% if user.profile_picture %}
                                  {{ user.profile_picture.url }}
@@ -42,18 +45,18 @@
 
             <!-- User Info -->
             <div class="col-md-6">
-                <div class="view-mode mt-4">
+                <div class="view-mode mt-4 col-md-6">
                     <div class="card p-4 shadow-sm border-0">
                         <h4 class="mb-3">Account Info</h4>
 
                         <div class="mb-2">
-                            <strong class="text-muted">Username:</strong>
+                            <strong>Username:</strong>
                             <span class="ms-2">{{ user.username }}</span>
                         </div>
 
                         {% if user.date_of_birth %}
                             <div>
-                                <strong class="text-muted">Date of Birth:</strong>
+                                <strong>Date of Birth:</strong>
                                 <span class="ms-2">{{ user.date_of_birth }}</span>
                             </div>
                         {% endif %}
@@ -106,7 +109,7 @@
                                         </div>
                                     {% endif %}
 
-                                    <p class="card-text text-muted">{{ course.description|truncatechars:100 }}</p>
+                                    <p class="card-text">{{ course.description|truncatechars:100 }}</p>
                                 </div>
                                 <div class="card-footer bg-transparent border-0 px-4 pb-3">
                                     <span class="badge

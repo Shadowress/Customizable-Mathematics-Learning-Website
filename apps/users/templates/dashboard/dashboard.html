@@ -16,13 +16,13 @@
     <!-- Container for centering content -->
     <div class="container-xl">
         <!-- Search and Filter Form -->
-        <div class="row justify-content-center mb-4 p-3 m-3 bg-light rounded shadow-sm">
+        <div class="row justify-content-center mb-4 dashboard-search-filter" style="margin-top: 20px">
             <div class="col-md-10">
                 <form id="searchForm" method="GET" action="" class="d-flex flex-wrap align-items-center justify-content-center gap-2">
                     <input type="hidden" name="saved_only" id="savedOnlyInput" value="{% if saved_only %}true{% else %}false{% endif %}">
 
                     <!-- Saved Filter Button -->
-                    <button type="button" class="btn {% if saved_only %}btn-warning text-dark{% else %}btn-outline-warning{% endif %} me-2" onclick="toggleSavedFilter()">
+                    <button type="button" id="save-btn" class="btn {% if saved_only %}btn-warning text-dark{% else %}btn-outline-warning{% endif %} me-2" onclick="toggleSavedFilter()">
                         ⭐ Show Saved
                     </button>
 
@@ -37,7 +37,7 @@
                     >
 
                     <!-- Search Button -->
-                    <button type="submit" class="btn btn-primary">Search</button>
+                    <button type="submit" id="search-btn" class="btn">Search</button>
                 </form>
             </div>
         </div>
@@ -49,8 +49,8 @@
                 <div class="row row-cols-1 row-cols-md-2 g-4">
                     {% for course in courses %}
                         <div class="col">
-                            <a href="{% url 'course' course.slug %}" class="text-decoration-none text-dark">
-                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden" style="min-height: 180px;">
+                            <a href="{% url 'course' course.slug %}" class="text-decoration-none">
+                                <div class="card h-100 shadow-sm course-card-hover border-0 rounded-4 overflow-hidden schedule-card" style="min-height: 180px;">
                                     <div class="card-body position-relative p-4 d-flex flex-column">
                                         <h5 class="card-title mb-3 fw-semibold">{{ course.title }}</h5>
 
@@ -65,7 +65,7 @@
                                             </div>
                                         {% endif %}
 
-                                        <p class="card-text text-muted">{{ course.description|truncatechars:100 }}</p>
+                                        <p class="card-text">{{ course.description|truncatechars:100 }}</p>
                                     </div>
                                     <div class="card-footer bg-transparent border-0 px-4 pb-3">
                                         <span class="badge
@@ -93,7 +93,7 @@
 
             <!-- Right Column: Scheduled Courses -->
             <div class="col-lg-3 ms-auto" style="padding-right: 20px;">
-                <div class="card shadow-sm border-0 rounded-4 p-3">
+                <div class="card shadow-sm border-0 rounded-4 p-3 schedule-card">
                     <h5 class="card-title mb-3 fs-5">📅 Scheduled Courses</h5> <!-- Smaller font size -->
 
                     {% if scheduled_courses %}
@@ -102,14 +102,14 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-start p-2">
                                     <div class="ms-2 me-auto">
                                         <div class="fw-semibold fs-6">{{ item.course.title }}</div> <!-- Smaller font size -->
-                                        <small class="text-muted" style="font-size: 0.75rem;">{{ item.scheduled_time|date:"l, j F Y, g:i A" }}</small>
+                                        <small style="font-size: 0.75rem;">{{ item.scheduled_time|date:"l, j F Y, g:i A" }}</small>
                                     </div>
                                     <a href="{% url 'course' item.course.slug %}" class="badge bg-primary text-decoration-none py-1 px-2">View</a> <!-- Smaller button -->
                                 </li>
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <p class="text-muted">No courses scheduled.</p>
+                        <p>No courses scheduled.</p>
                     {% endif %}
                 </div>
             </div>

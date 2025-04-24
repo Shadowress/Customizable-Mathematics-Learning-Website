@@ -1,16 +1,25 @@
-/* ===== Root Variables ===== */
+/* ===== Root Variables (Light Mode Default) ===== */
 :root {
-    /* Base Theme Colors */
-    --bg-color: #ffffff;
+    /* Main Background - Off white with gray tint */
+    --bg-color: #f5f6f8;
+
+    /* Section Background */
+    --section-bg-color: #ffffff;
+
+    /* Text */
     --text-color: #212529;
-    --primary-color: #0d6efd; /* Light mode primary */
-    --secondary-color: var(--theme-secondary-color, #f8f9fa); /* Customizable */
-    --theme-secondary-color: #f8f9fa;
+
+    /* Primary Color (e.g., Buttons, Links) */
+    --primary-color: #0d6efd;
+
+    /* Secondary/Accent color for highlights */
+    --secondary-color: var(--theme-secondary-color, #6c757d); /* customizable */
+    --theme-secondary-color: #6c757d;
 
     --accent-color: #ffc107;
 
     --border-color: #dee2e6;
-    --link-color: #0d6efd;
+    --link-color: var(--primary-color);
     --error-color: #dc3545;
     --success-color: #198754;
 
@@ -27,12 +36,18 @@
 /* ===== Dark Mode Overrides ===== */
 [data-theme="dark"] {
     --bg-color: #121212;
+
+    /* Dark gray that pairs well with black background and white text */
+    --section-bg-color: #1e1e1e;
+
+    /* Text becomes light */
     --text-color: #f8f9fa;
-    --primary-color: #1f6feb; /* Dark mode primary color */
-    --theme-secondary-color: #2a2d30; /* Will be overridden by JS theme selector */
+
+    --primary-color: #1f6feb;
+    --theme-secondary-color: #495057; /* Slightly lighter than section bg */
 
     --accent-color: #ffc107;
-    --border-color: #343a40;
+    --border-color: #2c2c2c;
     --link-color: #66b2ff;
     --error-color: #f44336;
     --success-color: #4caf50;
@@ -163,12 +178,6 @@ header {
     display: block;
     opacity: 1;
     pointer-events: auto;
-}
-
-/* Toggle Button Active Style */
-#dark-mode-toggle.active {
-    background-color: var(--primary-color);
-    color: #fff;
 }
 
 /* Accessibility Inputs */

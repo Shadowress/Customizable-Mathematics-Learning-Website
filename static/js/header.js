@@ -74,10 +74,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // 🔵 Only modify the secondary color
     function applyColorTheme(theme) {
         const secondaryColors = {
-            default: '#f8f9fa',   // Bootstrap default secondary
-            blue: '#0dcaf0',
-            green: '#198754',
-            purple: '#6f42c1'
+            default: '#6c757d',       // Bootstrap default secondary (gray)
+            blue: '#0d6efd',          // Bootstrap Primary Blue
+            purple: '#6f42c1',        // Bootstrap Purple
+            orange: '#fd7e14',        // Bootstrap Orange
+            green: '#198754',         // Bootstrap Green
+            red: '#dc3545'            // Bootstrap Danger Red
         };
 
         const color = secondaryColors[theme] || secondaryColors['default'];

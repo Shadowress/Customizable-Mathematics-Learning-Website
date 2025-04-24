@@ -1,3 +1,237 @@
+/* ===== Header Styling ===== */
+
+/* General Styling for Header */
+.site-header {
+    background-color: var(--bg-color);
+    padding: 1rem 2rem;
+}
+
+.site-header .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-color);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.site-header .username-text {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.site-header .profile-link {
+    display: flex;
+    align-items: center;
+}
+
+.site-header .profile-picture {
+    border-radius: 50%;
+    height: 50px;
+    width: 50px;
+    object-fit: cover;
+}
+
+.site-header form button {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.site-header form button:hover {
+    background-color: var(--primary-color);
+    opacity: 0.85;
+}
+
+/* ===== Sub-Header / Navbar Styling ===== */
+.sub-header {
+    background-color: var(--bg-color);
+    padding: 1rem 2rem;
+}
+
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    background-color: var(--section-bg-color);
+    border-radius: 1rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
+    width: 300px;
+}
+
+#dashboard-btn {
+    background-color: var(--secondary-color) !important;
+    color: white !important;
+    border: none !important;
+}
+
+#logout-btn {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Toggle button */
+#dark-mode-toggle {
+    font-size: 0.85rem;
+    transition: background-color 0.3s ease;
+    background-color: var(--secondary-color) !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Accessibility Button */
+#accessibility-btn {
+    font-size: 1rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 20px;
+    background-color: var(--secondary-color) !important;
+    color: white !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-color: none !important;
+}
+
+/* ===== Accessibility Menu ===== */
+#accessibility-menu {
+    padding: 1.5rem;
+    width: 350px;
+}
+
+#accessibility-menu label {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+#accessibility-menu .form-control {
+    border-radius: 0.5rem;
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+
+#accessibility-menu .form-label {
+    font-weight: 500;
+}
+
+#accessibility-menu .form-select {
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+}
+
+#accessibility-menu .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+#accessibility-menu input[type="number"] {
+    font-size: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.logo img:last-child {
+    display: none;
+}
+
+[data-theme="dark"] .logo img:first-child {
+    display: none;
+}
+
+[data-theme="dark"] .logo img:last-child {
+    display: block;
+}
+
+/* ===== Dark Mode Specific Overrides ===== */
+[data-theme="dark"] .site-header,
+[data-theme="dark"] .sub-header {
+    background-color: var(--bg-color);
+}
+
+[data-theme="light"] .site-header,
+[data-theme="light"] .sub-header {
+    background-color: var(--bg-color); /* Ensures the header and navbar follow the light theme */
+}
+
+[data-theme="dark"] .sub-header .btn-outline-primary {
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .sub-header .btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+[data-theme="dark"] #accessibility-menu label {
+    color: var(--text-color);
+}
+
+/* Default Button Styling */
+#save-btn {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    border-radius: 50px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    color: var(--text-color) !important;
+}
+
+/* Dark Mode Styling */
+[data-theme="dark"] #save-btn {
+    color: var(--text-dark-color); /* Text color for dark mode */
+}
+
+[data-theme="dark"] #save-btn.btn-warning {
+    color: var(--bg-dark-color); /* Override to use the background color for text */
+}
+
+/* Light Mode Styling */
+[data-theme="light"] #save-btn {
+    color: var(--text-light-color); /* Text color for light mode */
+}
+
+[data-theme="light"] #save-btn.btn-warning {
+    color: var(--bg-light-color); /* Override to use the background color for text */
+}
+
+/* Custom Styles for the Button When 'Saved Only' is Active */
+#save-btn.btn-warning {
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .site-header .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .sub-header .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+
+    #accessibility-menu {
+        width: 100%;
+    }
+
+    #accessibility-menu label {
+        font-size: 0.85rem;
+    }
+
+    #accessibility-menu .form-control,
+    #accessibility-menu .form-select {
+        font-size: 0.9rem;
+    }
+
+    #accessibility-menu .form-select {
+        margin-top: 0.5rem;
+    }
+}
+
 /* Wider dropdown */
 #accessibility-menu {
     width: 380px !important; /* Forcefully increase width */
@@ -29,15 +263,4 @@
     font-size: 0.9rem;
     padding: 6px 10px;
     border-radius: 8px;
-}
-
-/* Toggle button */
-#dark-mode-toggle {
-    font-size: 0.85rem;
-    transition: background-color 0.3s ease;
-}
-
-#dark-mode-toggle:hover {
-    background-color: #343a40;
-    color: white;
 }

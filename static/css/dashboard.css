@@ -1,17 +1,114 @@
+/* ===== Dashboard Specific Styling ===== */
+
+/* Ensure base colors come from root variables */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+#search-btn {
+    background-color: var(--secondary-color) !important;
+    color: white !important;
+}
+
+/* Search/Filter Form Container */
+.dashboard-search-filter {
+    background-color: var(--section-bg-color);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive form layout */
+#searchForm input[type="text"] {
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+#searchForm input[type="text"]::placeholder {
+    color: #adb5bd;
+}
+
+#searchForm .btn {
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Saved Filter Button */
+#searchForm .btn-outline-warning {
+    border: 1px solid #ffc107;
+    color: #ffc107;
+}
+
+#searchForm .btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+/* Course Cards */
 .course-card-hover {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
 }
 
 .course-card-hover:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
 }
 
-.card-title {
+/* Card Title */
+.course-card-hover .card-title {
     font-size: 1.25rem;
 }
 
-.card-text {
+/* Description */
+.course-card-hover .card-text {
     font-size: 0.95rem;
-    line-height: 1.5;
+    color: var(--text-color);
+}
+
+/* Difficulty Badge */
+.badge {
+    font-size: 0.85rem;
+    border-radius: 0.5rem;
+    padding: 0.35em 0.75em;
+}
+
+/* Scheduled Courses */
+.card.schedule-card {
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+/* List Group Item in Scheduled Section */
+.schedule-card .list-group-item {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.schedule-card .badge {
+    font-size: 0.75rem;
+    background-color: var(--primary-color);
+}
+
+/* Custom Responsive Tweaks */
+@media (max-width: 768px) {
+    .dashboard-search-filter {
+        padding: 1rem;
+    }
+
+    .course-card-hover .card-title {
+        font-size: 1.1rem;
+    }
+
+    .badge {
+        font-size: 0.8rem;
+    }
 }

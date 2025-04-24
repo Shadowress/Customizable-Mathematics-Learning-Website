@@ -1,18 +1,129 @@
 .profile-container {
+    padding: 2rem 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     position: relative;
-    padding: 2rem;
 }
 
 #edit-btn {
     position: absolute;
-    top: 2.5rem;        /* moved down */
-    right: 2.5rem;      /* moved left */
-    width: 50px;        /* increased size */
-    height: 50px;
+    top: 5rem;
+    right: 5rem;
+    width: 70px;
+    height: 70px;
     cursor: pointer;
     transition: transform 0.2s;
 }
 
 #edit-btn:hover {
     transform: scale(1.1);
+}
+
+.edit-button img:last-child {
+    display: none;
+}
+
+[data-theme="dark"] .edit-button img:first-child {
+    display: none;
+}
+
+[data-theme="dark"] .edit-button img:last-child {
+    display: block;
+}
+
+/* Profile Picture */
+.profile-picture-img {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #dee2e6;
+    transition: box-shadow 0.3s ease;
+}
+
+.profile-picture-img:hover {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Edit Mode Styling */
+.edit-mode.hidden {
+    display: none;
+}
+
+/* Completed Courses Grid */
+.course-card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Badge Styles */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 12px;
+}
+
+.view-mode,
+.edit-mode {
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+
+/* Optional: override card styles if Bootstrap is overriding background/text */
+.view-mode .card,
+.edit-mode .card {
+    background-color: var(--section-bg-color) !important;
+    color: var(--text-color) !important;
+}
+
+/* Course Cards */
+.course-card-hover {
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+}
+
+.course-card-hover:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+}
+
+/* Card Title */
+.course-card-hover .card-title {
+    font-size: 1.25rem;
+}
+
+/* Description */
+.course-card-hover .card-text {
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+/* Difficulty Badge */
+.badge {
+    font-size: 0.85rem;
+    border-radius: 0.5rem;
+    padding: 0.35em 0.75em;
+}
+
+/* Responsive Spacing */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+
+    #edit-btn {
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .profile-picture {
+        width: 200px !important;
+        height: 200px !important;
+    }
 }
