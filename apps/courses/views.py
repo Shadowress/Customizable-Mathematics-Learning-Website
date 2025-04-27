@@ -4,7 +4,6 @@ import tempfile
 
 import whisper
 import yt_dlp
-from django.contrib.auth.decorators import user_passes_test
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
@@ -13,14 +12,15 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
 from apps.courses.models import Course, Content, Quiz, Section, Answer, ScheduledCourse
-from apps.users.permissions import normal_user_required, content_manager_required
+from apps.users.utils import role_required, verify_normal_user
 from .forms import CourseForm, VideoContentFormSet, ImageContentFormSet, TextContentFormSet
 from .forms import SectionFormSet, QuizFormSet
 
 
 # Create your views here.
 # --- Normal User ---
-@user_passes_test(normal_user_required, login_url="homepage")
+@role_required(['normal'])
+@verify_normal_user
 def course(request, slug):
     course_qs = get_object_or_404(Course, slug=slug)
     user = request.user
@@ -123,7 +123,8 @@ def course(request, slug):
 
 
 @require_POST
-@user_passes_test(normal_user_required, login_url="homepage")
+@role_required(['normal'])
+@verify_normal_user
 def submit_quiz_answer(request):
     # Parse the JSON body
     try:
@@ -182,7 +183,8 @@ def submit_quiz_answer(request):
         })
 
 
-@user_passes_test(normal_user_required, login_url="homepage")
+@role_required(['normal'])
+@verify_normal_user
 def toggle_save_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     user = request.user
@@ -199,10 +201,10 @@ from django.utils.timezone import make_aware, now
 from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import user_passes_test
 
 
-@user_passes_test(normal_user_required, login_url="homepage")
+@role_required(['normal'])
+@verify_normal_user
 def schedule_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
@@ -263,7 +265,7 @@ def schedule_course(request, course_id):
 
 
 # --- Content Manager ---
-@user_passes_test(content_manager_required, login_url="homepage")
+@role_required(['content_manager'])
 def create_or_edit_course(request, slug=None):
     if slug:
         course = get_object_or_404(Course, slug=slug, created_by=request.user)
@@ -283,130 +285,131 @@ def create_or_edit_course(request, slug=None):
     quiz_prefix = "quiz"
 
     if request.method == "POST":
-        with transaction.atomic():
-            course_form = CourseForm(request.POST, instance=course)
-            section_formset = SectionFormSet(request.POST, instance=course, prefix=section_prefix)
-            text_content_formset = TextContentFormSet(
-                request.POST,
-                queryset=Content.objects.filter(section__course=course),
-                prefix=text_content_prefix
-            )
-            image_content_formset = ImageContentFormSet(
-                request.POST,
-                request.FILES,
-                queryset=Content.objects.filter(section__course=course),
-                prefix=image_content_prefix
-            )
-            video_content_formset = VideoContentFormSet(
-                request.POST,
-                queryset=Content.objects.filter(section__course=course),
-                prefix=video_content_prefix
-            )
-            quiz_formset = QuizFormSet(
-                request.POST,
-                queryset=Quiz.objects.filter(section__course=course),
-                prefix=quiz_prefix
-            )
+        if request.POST.get('action') == 'delete_course':
+            course.delete()
+            return redirect("content_manager_dashboard")
 
-            FIELD_WHITELISTS = {
-                "section": ["id", "title", "order"],
-                "text": ["id", "content_type", "text_content", "order", "section_order"],
-                "image": ["id", "content_type", "alt_text", "order", "section_order"],
-                "video": ["id", "content_type", "video_url", "video_transcription", "order", "section_order"],
-                "quiz": ["id", "question", "correct_answer", "order", "section_order"],
-            }
+        else:
+            with transaction.atomic():
+                course_form = CourseForm(request.POST, instance=course)
+                section_formset = SectionFormSet(request.POST, instance=course, prefix=section_prefix)
+                text_content_formset = TextContentFormSet(
+                    request.POST,
+                    queryset=Content.objects.filter(section__course=course),
+                    prefix=text_content_prefix
+                )
+                image_content_formset = ImageContentFormSet(
+                    request.POST,
+                    request.FILES,
+                    queryset=Content.objects.filter(section__course=course),
+                    prefix=image_content_prefix
+                )
+                video_content_formset = VideoContentFormSet(
+                    request.POST,
+                    queryset=Content.objects.filter(section__course=course),
+                    prefix=video_content_prefix
+                )
+                quiz_formset = QuizFormSet(
+                    request.POST,
+                    queryset=Quiz.objects.filter(section__course=course),
+                    prefix=quiz_prefix
+                )
 
-            serialized_sections = [
-                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["section"])
-                for form in section_formset.forms
-                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["section"])
-            ]
+                FIELD_WHITELISTS = {
+                    "section": ["id", "title", "order"],
+                    "text": ["id", "content_type", "text_content", "order", "section_order"],
+                    "image": ["id", "content_type", "alt_text", "order", "section_order"],
+                    "video": ["id", "content_type", "video_url", "video_transcription", "order", "section_order"],
+                    "quiz": ["id", "question", "correct_answer", "order", "section_order"],
+                }
 
-            serialized_text_contents = [
-                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["text"])
-                for form in text_content_formset.forms
-                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["text"])
-            ]
+                serialized_sections = [
+                    _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["section"])
+                    for form in section_formset.forms
+                    if _form_has_non_empty_fields(form, FIELD_WHITELISTS["section"])
+                ]
 
-            serialized_image_contents = [
-                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["image"])
-                for form in image_content_formset.forms
-                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["image"])
-            ]
+                serialized_text_contents = [
+                    _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["text"])
+                    for form in text_content_formset.forms
+                    if _form_has_non_empty_fields(form, FIELD_WHITELISTS["text"])
+                ]
 
-            serialized_video_contents = [
-                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["video"])
-                for form in video_content_formset.forms
-                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["video"])
-            ]
+                serialized_image_contents = [
+                    _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["image"])
+                    for form in image_content_formset.forms
+                    if _form_has_non_empty_fields(form, FIELD_WHITELISTS["image"])
+                ]
 
-            serialized_quizzes = [
-                _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["quiz"])
-                for form in quiz_formset.forms
-                if _form_has_non_empty_fields(form, FIELD_WHITELISTS["quiz"])
-            ]
+                serialized_video_contents = [
+                    _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["video"])
+                    for form in video_content_formset.forms
+                    if _form_has_non_empty_fields(form, FIELD_WHITELISTS["video"])
+                ]
 
-            if all([
-                course_form.is_valid(),
-                section_formset.is_valid(),
-                text_content_formset.is_valid(),
-                image_content_formset.is_valid(),
-                video_content_formset.is_valid(),
-                quiz_formset.is_valid()
-            ]):
-                course = course_form.save(commit=False)
+                serialized_quizzes = [
+                    _clean_for_json(form.cleaned_data if form.is_valid() else form.data, FIELD_WHITELISTS["quiz"])
+                    for form in quiz_formset.forms
+                    if _form_has_non_empty_fields(form, FIELD_WHITELISTS["quiz"])
+                ]
 
-                action = request.POST.get("action")
-                if action == "publish":
-                    course.status = Course.PUBLISHED
+                if all([
+                    course_form.is_valid(),
+                    section_formset.is_valid(),
+                    text_content_formset.is_valid(),
+                    image_content_formset.is_valid(),
+                    video_content_formset.is_valid(),
+                    quiz_formset.is_valid()
+                ]):
+                    course = course_form.save(commit=False)
 
-                elif action == "save_draft":
-                    course.status = Course.DRAFT
-                    ScheduledCourse.objects.filter(course=course).delete()
+                    action = request.POST.get("action")
+                    if action == "publish":
+                        course.status = Course.PUBLISHED
 
-                elif action == "delete_course":
-                    course.delete()
+                    elif action == "save_draft":
+                        course.status = Course.DRAFT
+                        ScheduledCourse.objects.filter(course=course).delete()
+
+                    course.created_by = request.user
+                    course.save()
+
+                    section_lookup = {}
+
+                    for form in section_formset.forms:
+                        section_id = form.cleaned_data.get("id")
+                        marked_for_deletion = form.cleaned_data.get("DELETE", False)
+
+                        if not section_id:
+                            if marked_for_deletion:
+                                continue
+
+                            section = Section()
+
+                        else:
+                            try:
+                                section = Section.objects.get(pk=section_id.pk)
+                            except Section.DoesNotExist:
+                                raise ValidationError(f"Section with ID {section_id} does not exist.")
+
+                            if marked_for_deletion:
+                                section.delete()
+                                continue
+
+                        section.course = course
+                        section.title = form.cleaned_data.get("title")
+                        section.order = form.cleaned_data.get("order")
+                        section.save()
+
+                        if section.order is not None:
+                            section_lookup[section.order] = section
+
+                    _save_content_and_quiz_formset(text_content_formset, section_lookup, content_type="text")
+                    _save_content_and_quiz_formset(image_content_formset, section_lookup, content_type="image")
+                    _save_content_and_quiz_formset(video_content_formset, section_lookup, content_type="video")
+                    _save_content_and_quiz_formset(quiz_formset, section_lookup, content_type="quiz")
+
                     return redirect("content_manager_dashboard")
-
-                course.created_by = request.user
-                course.save()
-
-                section_lookup = {}
-
-                for form in section_formset.forms:
-                    section_id = form.cleaned_data.get("id")
-                    marked_for_deletion = form.cleaned_data.get("DELETE", False)
-
-                    if not section_id:
-                        if marked_for_deletion:
-                            continue
-
-                        section = Section()
-
-                    else:
-                        try:
-                            section = Section.objects.get(pk=section_id.pk)
-                        except Section.DoesNotExist:
-                            raise ValidationError(f"Section with ID {section_id} does not exist.")
-
-                        if marked_for_deletion:
-                            section.delete()
-                            continue
-
-                    section.course = course
-                    section.title = form.cleaned_data.get("title")
-                    section.order = form.cleaned_data.get("order")
-                    section.save()
-
-                    if section.order is not None:
-                        section_lookup[section.order] = section
-
-                _save_content_and_quiz_formset(text_content_formset, section_lookup, content_type="text")
-                _save_content_and_quiz_formset(image_content_formset, section_lookup, content_type="image")
-                _save_content_and_quiz_formset(video_content_formset, section_lookup, content_type="video")
-                _save_content_and_quiz_formset(quiz_formset, section_lookup, content_type="quiz")
-
-                return redirect("content_manager_dashboard")
 
     else:
         course_form = CourseForm(instance=course) if course else CourseForm()
@@ -505,7 +508,19 @@ def create_or_edit_course(request, slug=None):
 
 
 @require_POST
+@role_required(['content_manager'])
 def transcribe_video(request):
+    # to suppress error messages for transcribe_video view testing
+    class MyLogger:
+        def debug(self, msg):
+            pass
+
+        def warning(self, msg):
+            pass
+
+        def error(self, msg):
+            pass
+
     video_url = request.POST.get('video_url')
 
     if not video_url:
@@ -515,7 +530,6 @@ def transcribe_video(request):
         with tempfile.TemporaryDirectory() as temp_dir:
             audio_path = os.path.join(temp_dir, "audio.wav")
 
-            # 1. Download and extract audio
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'outtmpl': os.path.join(temp_dir, 'audio.%(ext)s'),
@@ -525,19 +539,19 @@ def transcribe_video(request):
                     'preferredquality': '192',
                 }],
                 'quiet': True,
+                'no_warnings': True,
+                'logger': MyLogger(),
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([video_url])
 
-            # Find the audio file
             for file in os.listdir(temp_dir):
                 if file.endswith(".wav"):
                     audio_path = os.path.join(temp_dir, file)
                     break
 
-            # 2. Transcribe audio using whisper with timestamps
-            model = whisper.load_model("base")  # You can also use "tiny", "small", etc.
+            model = whisper.load_model("base")
             result = model.transcribe(audio_path)
 
             segments = result.get("segments", [])
@@ -560,7 +574,7 @@ def transcribe_video(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
-# --- Private Methods ---
+# --- Private Functions ---
 def _save_content_and_quiz_formset(formset, section_lookup, content_type=None):
     for form in formset:
         cleaned_data = form.cleaned_data

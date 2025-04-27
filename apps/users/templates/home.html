@@ -7,7 +7,7 @@
 {% block content %}
     <div class="container py-5 text-center">
         <!-- Project Logo or Title -->
-        <img src="{% static 'img/logo.png' %}" alt="Project Logo" class="mb-4" style="max-width: 150px;">
+        <img src="{% static 'img/logo.png' %}" alt="Project Logo" class="mb-4" style="max-width: 200px;">
 
         <h1 class="display-5 fw-bold mb-3">Accessible Mathematics Learning</h1>
         <p class="lead mb-4">
@@ -18,8 +18,12 @@
         <div class="mb-4">
             <p class="mb-2">In collaboration with:</p>
             <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap">
-                <img src="{% static 'img/ams_logo.png' %}" alt="AMS Logo" height="100">
-                <img src="{% static 'img/asha_logo.png' %}" alt="ASHA Logo" height="100">
+                <a href="https://www.ams.org/home/page" target="_blank">
+                    <img src="{% static 'img/ams_logo.png' %}" alt="AMS Logo" height="100" style="border-radius: 50%;">
+                </a>
+                <a href="https://www.asha.org" target="_blank">
+                    <img src="{% static 'img/asha_logo.png' %}" alt="ASHA Logo" height="100" style="border-radius: 50%;">
+                </a>
             </div>
         </div>
 

@@ -1,32 +1,25 @@
 from http.client import HTTPResponse
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, get_backends, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
 from django.contrib.auth.views import LogoutView
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.core.mail import EmailMessage
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
 from apps.courses.models import Course, ScheduledCourse
 from .forms import CustomSignupForm, ProfileUpdateForm
-from .permissions import normal_user_required, content_manager_required
-from .utils import generate_verification_token
+from .utils import pre_login_redirect, send_email, verify_normal_user, role_required
 
 # Create your views here.
 User = get_user_model()
@@ -34,21 +27,14 @@ signer = TimestampSigner()
 
 
 # --- Main Page ---
-def home(request) -> HTTPResponse:
-    redirection = _redirect_authenticated_user(request.user)
-
-    if redirection:
-        return redirection
-
+@pre_login_redirect
+def home(request):
     return render(request, "home.html")
 
 
 # --- Authentication ---
+@pre_login_redirect
 def user_login(request):
-    redirection = _redirect_authenticated_user(request.user)
-    if redirection:
-        return redirection
-
     if request.method == "POST":
         post_data = request.POST.copy()
         email = post_data.get("username", "").strip().lower()
@@ -76,11 +62,10 @@ def user_login(request):
             backend = get_backends()[0]
             login(request, user, backend=backend.__class__.__module__ + "." + backend.__class__.__name__)
 
-            if not user.is_verified:
-                _send_email(user, "verification")
-                return redirect("verify_email_page")
-
-            return _redirect_user_dashboard(user)
+            if user.role == "normal":
+                return redirect("dashboard")
+            elif user.role == "content_manager":
+                return redirect("content_manager_dashboard")
 
         if user is None:
             form.errors.pop("__all__", None)
@@ -92,12 +77,8 @@ def user_login(request):
     return render(request, "auth/login.html", {"form": form})
 
 
+@pre_login_redirect
 def user_signup(request):
-    redirection = _redirect_authenticated_user(request.user)
-
-    if redirection:
-        return redirection
-
     if request.method == "POST":
         form = CustomSignupForm(request.POST)
 
@@ -109,7 +90,7 @@ def user_signup(request):
             backend = get_backends()[0]
             login(request, user, backend=backend.__class__.__module__ + "." + backend.__class__.__name__)
 
-            _send_email(user, "verification")
+            send_email(user, "verification")
             return redirect("verify_email_page")
 
     else:
@@ -160,9 +141,10 @@ def verify_email(request, token):
         )
 
 
+@login_required
 def check_verification_status(request):
     if request.user.is_authenticated and request.user.is_verified:
-        return _redirect_user_dashboard(request.user)
+        return redirect("dashboard")
 
     return HttpResponse(status=204)
 
@@ -171,7 +153,7 @@ def check_verification_status(request):
 @csrf_exempt
 def resend_verification_email(request):
     if request.method == "POST":
-        _send_email(request.user, "verification")
+        send_email(request.user, "verification")
         return JsonResponse({"message": "Verification email resent."})
 
     return JsonResponse({"error": "Invalid request."}, status=400)
@@ -191,7 +173,7 @@ def password_reset_request(request):
         user = User.objects.filter(email=email).first()
 
         if user:
-            _send_email(user, "password_reset")
+            send_email(user, "password_reset")
             request.session["password_reset_email"] = email
             request.session.set_expiry(300)
 
@@ -202,7 +184,7 @@ def password_reset_request(request):
 
         if not email:
             messages.error(request, "Please enter a valid email address.")
-            return redirect("password_reset_request")
+            return redirect("password_reset")
 
         user = User.objects.filter(email=email).first()
 
@@ -211,7 +193,7 @@ def password_reset_request(request):
             return redirect("homepage")
 
         if user:
-            _send_email(user, "password_reset")
+            send_email(user, "password_reset")
             request.session["password_reset_email"] = email
             request.session.set_expiry(300)
 
@@ -314,7 +296,7 @@ def resend_password_reset_verification(request):
         if not user.is_active:
             return JsonResponse({"error": "User account is not active."}, status=400)
 
-        _send_email(user, "password_reset")
+        send_email(user, "password_reset")
 
         return JsonResponse({"message": "Password reset verification email has been resent."})
 
@@ -323,8 +305,9 @@ def resend_password_reset_verification(request):
 
 
 # --- Dashboard Views ---
-@user_passes_test(normal_user_required, login_url="homepage")
-def dashboard(request) -> HTTPResponse:
+@role_required(['normal'])
+@verify_normal_user
+def dashboard(request):
     query = request.GET.get('q', '')
     saved_only = request.GET.get('saved_only') == 'true'
     courses_qs = Course.objects.filter(status='published')
@@ -370,7 +353,8 @@ def dashboard(request) -> HTTPResponse:
     )
 
 
-@user_passes_test(normal_user_required, login_url="homepage")
+@role_required(['normal'])
+@verify_normal_user
 def profile(request):
     form = ProfileUpdateForm(instance=request.user)
 
@@ -394,7 +378,8 @@ def profile(request):
     })
 
 
-@user_passes_test(normal_user_required, login_url="homepage")
+@role_required(['normal'])
+@verify_normal_user
 def profile_picture_upload(request):
     if request.method == "POST" and request.FILES.get("profile_picture"):
         user = request.user
@@ -419,12 +404,12 @@ def profile_picture_upload(request):
     return redirect("profile")
 
 
-@user_passes_test(content_manager_required, login_url="homepage")
-def content_manager_dashboard(request) -> HTTPResponse:
+@role_required(['content_manager'])
+def content_manager_dashboard(request):
     query = request.GET.get('q', '')
 
     published_courses = Course.objects.filter(status='published')
-    draft_courses = Course.objects.filter(status='draft')
+    draft_courses = Course.objects.filter(status='draft', created_by=request.user)
 
     if query:
         search_filter = Q(title__icontains=query) | Q(description__icontains=query)
@@ -441,64 +426,3 @@ def content_manager_dashboard(request) -> HTTPResponse:
             "query": query
         }
     )
-
-
-# --- Private Methods ---
-def _redirect_authenticated_user(user):
-    """
-    Redirect authenticated users based on their account status.
-    - Superusers can access home, login, or signup pages.
-    - Active users are redirected to their respective dashboards.
-    - Inactive users are redirected to the email verification page.
-    """
-    if not user.is_authenticated:
-        return None
-
-    if user.is_superuser:
-        return None
-
-    if not user.is_verified:
-        _send_email(user, "verification")
-        return redirect("verify_email_page")
-
-    return _redirect_user_dashboard(user)
-
-
-def _redirect_user_dashboard(user):
-    """Redirect users based on their role."""
-    if user.role == "normal":
-        return redirect("dashboard")
-
-    elif user.role == "content_manager":
-        return redirect("content_manager_dashboard")
-
-    raise PermissionDenied("Invalid user role.")
-
-
-def _send_email(user, purpose):
-    """Sends a verification or password reset email with a token."""
-    token = generate_verification_token(user)
-    current_site = get_current_site(None)
-
-    if purpose == "verification":
-        url = f"http://{current_site.domain}{reverse('verify_email', args=[token])}"
-        subject = "Verify Your Email"
-        message = format_html(
-            'Click <a href="{}">this link</a> to verify your email.<br><br>'
-            'This link will expire in 5 minutes.', url
-        )
-
-    elif purpose == "password_reset":
-        url = f"http://{current_site.domain}{reverse('verify_password_reset', args=[token])}"
-        subject = "Reset Your Password"
-        message = format_html(
-            'Click <a href="{}">this link</a> to reset your password.<br><br>'
-            'This link will expire in 5 minutes.', url
-        )
-
-    else:
-        raise ValueError("Invalid email purpose")
-
-    email = EmailMessage(subject, message, settings.EMAIL_HOST_USER, [user.email])
-    email.content_subtype = "html"  # Set email to be HTML formatted
-    email.send(fail_silently=False)
