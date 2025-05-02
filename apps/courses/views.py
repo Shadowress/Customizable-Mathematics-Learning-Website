@@ -1,20 +1,24 @@
 import json
 import os
 import tempfile
+from datetime import datetime, timedelta
 
 import whisper
 import yt_dlp
+from django.contrib import messages
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
+from django.utils.timezone import make_aware, now
 from django.views.decorators.http import require_POST
 
+from apps.courses.forms import (CourseForm, VideoContentFormSet, ImageContentFormSet, TextContentFormSet,
+                                SectionFormSet, QuizFormSet)
 from apps.courses.models import Course, Content, Quiz, Section, Answer, ScheduledCourse
 from apps.users.utils import role_required, verify_normal_user
-from .forms import CourseForm, VideoContentFormSet, ImageContentFormSet, TextContentFormSet
-from .forms import SectionFormSet, QuizFormSet
 
 
 # Create your views here.
@@ -93,7 +97,8 @@ def course(request, slug):
             except Answer.DoesNotExist:
                 show_answer = False
                 placeholder = "".join(
-                    "_" if c not in [" ", "/", ",", ".", "\"", "'", ":"] else c for c in quiz.correct_answer or "")
+                    "_" if c not in [" ", "/", ",", ".", "\"", "'", ":"]
+                    else c for c in quiz.correct_answer or "")
 
             quiz_data.append({
                 "id": quiz.id,
@@ -126,7 +131,6 @@ def course(request, slug):
 @role_required(['normal'])
 @verify_normal_user
 def submit_quiz_answer(request):
-    # Parse the JSON body
     try:
         data = json.loads(request.body)
         quiz_id = data.get("quiz_id")
@@ -197,12 +201,6 @@ def toggle_save_course(request, course_id):
     return redirect('course', slug=course.slug)
 
 
-from django.utils.timezone import make_aware, now
-from datetime import datetime, timedelta
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-
-
 @role_required(['normal'])
 @verify_normal_user
 def schedule_course(request, course_id):
@@ -213,7 +211,6 @@ def schedule_course(request, course_id):
         scheduled_time_str = request.POST.get("scheduled_time")
         existing_schedule = ScheduledCourse.objects.filter(user=request.user, course=course).first()
 
-        # Validate time input for scheduling and rescheduling
         def parse_scheduled_time():
             if not scheduled_time_str:
                 messages.error(request, "Scheduled time is required.")
@@ -362,17 +359,19 @@ def create_or_edit_course(request, slug=None):
                     quiz_formset.is_valid()
                 ]):
                     course = course_form.save(commit=False)
-
+                    course.created_by = request.user
                     action = request.POST.get("action")
+
                     if action == "publish":
                         course.status = Course.PUBLISHED
 
                     elif action == "save_draft":
                         course.status = Course.DRAFT
-                        ScheduledCourse.objects.filter(course=course).delete()
 
-                    course.created_by = request.user
                     course.save()
+
+                    if action == "save_draft":
+                        ScheduledCourse.objects.filter(course=course).delete()
 
                     section_lookup = {}
 
@@ -428,7 +427,6 @@ def create_or_edit_course(request, slug=None):
         serialized_quizzes = []
 
         for section in section_qs:
-            # TEXT
             text_formset = TextContentFormSet(
                 instance=section,
                 prefix=text_content_prefix,
@@ -439,7 +437,6 @@ def create_or_edit_course(request, slug=None):
 
             serialized_text_contents.extend(_serialize_text_content_formset(text_formset))
 
-            # IMAGE
             image_formset = ImageContentFormSet(
                 instance=section,
                 prefix=image_content_prefix,
@@ -450,7 +447,6 @@ def create_or_edit_course(request, slug=None):
 
             serialized_image_contents.extend(_serialize_image_content_formset(image_formset))
 
-            # VIDEO
             video_formset = VideoContentFormSet(
                 instance=section,
                 prefix=video_content_prefix,
@@ -461,7 +457,6 @@ def create_or_edit_course(request, slug=None):
 
             serialized_video_contents.extend(_serialize_video_content_formset(video_formset))
 
-            # QUIZ
             quiz_formset_data = QuizFormSet(
                 instance=section,
                 prefix=quiz_prefix,
@@ -497,7 +492,6 @@ def create_or_edit_course(request, slug=None):
             "video_content_formset": video_content_formset,
             "quiz_formset": quiz_formset,
 
-            # Serialized JSON for course edit
             "existing_sections": serialized_sections,
             "existing_text_contents": serialized_text_contents,
             "existing_image_contents": serialized_image_contents,

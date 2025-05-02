@@ -35,6 +35,8 @@ ALLOWED_HOSTS = ['127.0.0.1']
 SITE_ID = 1
 
 INSTALLED_APPS = [
+    'apps.users',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -51,7 +53,6 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
 
-    'apps.users',
     'apps.courses',
 ]
 
@@ -175,7 +176,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_PRESERVE_USERNAME_CASING = False
 
 # Custom adapters
-SOCIALACCOUNT_ADAPTER = "users.adapters.CustomSocialAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "apps.users.adapters.CustomSocialAccountAdapter"
 
 # Social account settings
 SOCIALACCOUNT_LOGIN_ON_GET = True

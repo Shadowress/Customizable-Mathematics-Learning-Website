@@ -45,8 +45,8 @@
         <!-- Courses and Scheduled Display -->
         <div class="row justify-content-between">
             <!-- Left Column: Courses -->
-            <div class="col-12 col-md-12 col-lg-7">
-                <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="col-12 col-md-12 col-lg-9">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                     {% for course in courses %}
                         <div class="col">
                             <a href="{% url 'course' course.slug %}" class="text-decoration-none">

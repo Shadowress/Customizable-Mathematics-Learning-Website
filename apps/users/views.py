@@ -18,8 +18,8 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
 from apps.courses.models import Course, ScheduledCourse
-from .forms import CustomSignupForm, ProfileUpdateForm
-from .utils import pre_login_redirect, send_email, verify_normal_user, role_required
+from apps.users.forms import CustomSignupForm, ProfileUpdateForm
+from apps.users.utils import pre_login_redirect, send_email, verify_normal_user, role_required
 
 # Create your views here.
 User = get_user_model()
@@ -384,22 +384,17 @@ def profile_picture_upload(request):
     if request.method == "POST" and request.FILES.get("profile_picture"):
         user = request.user
         file = request.FILES["profile_picture"]
-
-        # Define a fixed filename format based on user ID
         file_name = f"profile_pictures/{user.id}_profile.jpg"
 
-        # Delete old file before saving new one (if exists)
         if user.profile_picture:
             default_storage.delete(user.profile_picture.path)
 
-        # Save new image
         path = default_storage.save(file_name, ContentFile(file.read()))
 
-        # Ensure the database URL remains the same (avoid duplicates)
         user.profile_picture = file_name
         user.save()
 
-        return redirect("profile")  # Reload page to apply changes
+        return redirect("profile")
 
     return redirect("profile")
 
