@@ -24,7 +24,6 @@ User = get_user_model()
 
 class NormalUserViewTests(TestCase):
     def setUp(self):
-        # Create a normal user
         self.user = get_user_model().objects.create_user(
             username='testuser',
             password='password123',
@@ -34,7 +33,6 @@ class NormalUserViewTests(TestCase):
         )
         self.client.login(email='testuser@example.com', password='password123')
 
-        # Create a sample course and section for testing
         self.course = Course.objects.create(
             title="Test Course",
             description="Test description",
@@ -46,14 +44,12 @@ class NormalUserViewTests(TestCase):
             course=self.course,
             order=1
         )
-        # Create a quiz for the section
         self.quiz = Quiz.objects.create(
             question="What is 2 + 2?",
             correct_answer="4",
             section=self.section,
             order=0
         )
-        # Create content for the section (e.g., text, image)
         self.content = Content.objects.create(
             content_type="text",
             text_content="Sample text content",
@@ -62,14 +58,12 @@ class NormalUserViewTests(TestCase):
         )
 
     def test_course_view(self):
-        # Test the course detail view for a normal user
         response = self.client.get(reverse('course', kwargs={'slug': self.course.slug}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.course.title)
         self.assertContains(response, self.section.title)
 
     def test_submit_quiz_answer_correct(self):
-        # Test submitting a correct quiz answer
         response = self.client.post(reverse('submit_quiz_answer'), data={
             'quiz_id': self.quiz.id,
             'answer': '4'
@@ -86,7 +80,6 @@ class NormalUserViewTests(TestCase):
         })
 
     def test_submit_quiz_answer_incorrect(self):
-        # Test submitting an incorrect quiz answer
         response = self.client.post(reverse('submit_quiz_answer'), data={
             'quiz_id': self.quiz.id,
             'answer': '5'
@@ -102,30 +95,24 @@ class NormalUserViewTests(TestCase):
         })
 
     def test_toggle_save_course(self):
-        # Test toggling the saved courses
         response = self.client.get(reverse('toggle_save_course', kwargs={'course_id': self.course.id}))
-        self.assertEqual(response.status_code, 302)  # Redirect
-        # Check that the course is now saved
+        self.assertEqual(response.status_code, 302)
         self.assertTrue(self.user.saved_courses.filter(id=self.course.id).exists())
 
-        # Toggle again to unsave
         response = self.client.get(reverse('toggle_save_course', kwargs={'course_id': self.course.id}))
-        self.assertEqual(response.status_code, 302)  # Redirect
-        # Check that the course is now unsaved
+        self.assertEqual(response.status_code, 302)
         self.assertFalse(self.user.saved_courses.filter(id=self.course.id).exists())
 
     def test_schedule_course(self):
-        # Test scheduling a course
         scheduled_time = now() + timedelta(hours=1)
         response = self.client.post(reverse('schedule_course', kwargs={'course_id': self.course.id}), data={
             'action': 'schedule',
             'scheduled_time': scheduled_time.strftime('%Y-%m-%dT%H:%M')
         })
-        self.assertEqual(response.status_code, 302)  # Redirect
+        self.assertEqual(response.status_code, 302)
         self.assertTrue(ScheduledCourse.objects.filter(user=self.user, course=self.course).exists())
 
     def test_reschedule_course(self):
-        # Test rescheduling a course
         scheduled_time = now() + timedelta(hours=1)
         ScheduledCourse.objects.create(
             user=self.user,
@@ -146,7 +133,6 @@ class NormalUserViewTests(TestCase):
                          f"Expected {updated_scheduled_time_truncated} to be equal to {new_scheduled_time_truncated}")
 
     def test_unschedule_course(self):
-        # Test unscheduling a course
         scheduled_time = now() + timedelta(hours=1)
         scheduled_course = ScheduledCourse.objects.create(
             user=self.user,
@@ -157,7 +143,7 @@ class NormalUserViewTests(TestCase):
             'action': 'unschedule',
             'scheduled_time': ''
         })
-        self.assertEqual(response.status_code, 302)  # Redirect
+        self.assertEqual(response.status_code, 302)
         self.assertFalse(ScheduledCourse.objects.filter(id=scheduled_course.id).exists())
 
 
@@ -165,14 +151,11 @@ class ContentManagerViewsTest(TestCase):
     def setUp(self):
         self.client = Client()
 
-        # Create a content_manager user
         self.content_manager = User.objects.create_user(
             username="manager", email="manager@example.com", password="password", role="content_manager"
         )
-
         self.client.login(email="manager@example.com", password="password")
 
-        # Create a sample course
         self.course = Course.objects.create(
             title="Sample Course",
             slug="sample-course",
@@ -233,7 +216,7 @@ class ContentManagerViewsTest(TestCase):
 
     def test_transcribe_video_missing_url(self):
         url = reverse('transcribe_video')
-        response = self.client.post(url, {})  # No video_url
+        response = self.client.post(url, {})
         self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Missing video URL'})
 

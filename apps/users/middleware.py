@@ -3,7 +3,7 @@ from typing import Any
 from django.http import HttpRequest
 from django.shortcuts import redirect
 
-INTERNAL_IPS = ["127.0.0.1", "192.168.1.0/24"]  # todo add internal IPs
+INTERNAL_IPS = ["127.0.0.1"]  # todo add internal IPs
 
 
 class RestrictAdminMiddleware:

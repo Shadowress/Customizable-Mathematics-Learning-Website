@@ -235,8 +235,6 @@ class PasswordResetViewsTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIn("window.close();", response.content.decode())
-
-        # Ensure session contains user ID
         session_user_id = self.client.session.get("password_reset_verified_user")
         self.assertEqual(session_user_id, self.user.pk)
 
@@ -256,8 +254,6 @@ class PasswordResetViewsTest(TestCase):
             "new_password2": "newStrongPassword123",
         })
         self.assertRedirects(response, reverse("login"))
-
-        # Confirm password actually updated
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("newStrongPassword123"))
 
@@ -304,7 +300,6 @@ class DashboardViewsTests(TestCase):
     def setUp(self):
         self.client = Client()
 
-        # Create a normal user
         self.normal_user = User.objects.create_user(
             email='normal@example.com',
             username='normaluser',
@@ -315,7 +310,6 @@ class DashboardViewsTests(TestCase):
         self.normal_user.is_active = True
         self.normal_user.save()
 
-        # Create a content manager user
         self.manager_user = User.objects.create_user(
             email='content_manager@example.com',
             username='manageruser',
@@ -345,7 +339,7 @@ class DashboardViewsTests(TestCase):
     def test_profile_view_post_valid_data(self):
         self.client.login(email='normal@example.com', password='testpass')
         response = self.client.post(reverse("profile"), {
-            "username": "normaluser",  # assuming username is editable
+            "username": "normaluser",
             "email": "newemail@example.com"
         })
         self.assertEqual(response.status_code, 302)
@@ -379,7 +373,7 @@ class DashboardViewsTests(TestCase):
             title="Test Course",
             description="A test course.",
             difficulty=Course.JUNIOR,
-            estimated_completion_time=30,  # in minutes
+            estimated_completion_time=30,
             status="published"
         )
         self.normal_user.saved_courses.add(course)
