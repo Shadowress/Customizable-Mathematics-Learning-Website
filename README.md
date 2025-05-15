@@ -49,22 +49,23 @@ Before installation, ensure you have these installed:
     winget install ffmpeg
     ```
     
-## Clone the repository 
-    ```bash
-    git clone https://github.com/Shadowress/Customizable-Mathematics-Learning-Website
-    cd CustomizableLearningPlatform
-    ```
+## Clone the repository
+  
+  ```bash
+  git clone https://github.com/Shadowress/Customizable-Mathematics-Learning-Website
+  cd CustomizableLearningPlatform
+  ```
     
 ## Set up a virtual environment
-    ```bash
-    python -m venv venv
-    venv\Scripts\activate
-    ```
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate
+   ```
 
 ## Install dependencies
-    ```bash
-    pip install -r requirements.txt
-    ```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Google OAuth Setup
 1. **Google Account Setup**:
@@ -82,14 +83,14 @@ Before installation, ensure you have these installed:
 
 ## Environment Configurations
 1. Rename .env.example to .env:
-    ```bash
-    ren .env.example .env
-    ```
+   ```bash
+   ren .env.example .env
+   ```
 
 2. Open .env in Notepad:
-    ```bash
-    notepad .env
-    ```
+   ```bash
+   notepad .env
+   ```
 
 3. Inside .env, configure the following:
    - Generate a Django secret key:
@@ -102,43 +103,43 @@ Before installation, ensure you have these installed:
       EMAIL_HOST_PASSWORD=<your-app-password>
 
 ## Database Setup
-    ```bash
-    python manage.py makemigrations users
-    python manage.py makemigrations courses
-    python manage.py migrate
-    ```
+   ```bash
+   python manage.py makemigrations users
+   python manage.py makemigrations courses
+   python manage.py migrate
+   ```
 
-    ⚠️ If you face migration issues:
-       - Delete db.sqlite3
-       - Delete all .py files (except __init__.py) inside each app's migrations/ folder
-       - Re-run the above commands
+   ⚠️ If you face migration issues:
+      - Delete db.sqlite3
+      - Delete all .py files (except __init__.py) inside each app's migrations/ folder
+      - Re-run the above commands
 
 ## Collect Static Files
-    ```bash
-    python manage.py collectstatic
-    ```
+   ```bash
+   python manage.py collectstatic
+   ```
 
 ## Create Admin User
-    ```bash
-    python manage.py createsuperuser
-    ```
+   ```bash
+   python manage.py createsuperuser
+   ```
 
 ## Start the Server
-    ```bash
-    python manage.py runserver
-    ```
-    Visit: http://127.0.0.1:8000
+   ```bash
+   python manage.py runserver
+   ```
+   Visit: http://127.0.0.1:8000
 
 ## Django Admin Configuration
-    1. Go to http://127.0.0.1:8000/admin and log in with your superuser credentials.
-    2. Navigate to Sites and change the domain to:
-       - 127.0.0.1:8000
-    3. Go to Social Applications:
-       - Add a new application.
-       - Choose Google as the provider.
-       - Enter your Client ID and Client Secret.
-       - Move 127.0.0.1:8000 from "Available sites" to "Chosen sites".
-       - Save.
+1. Go to http://127.0.0.1:8000/admin and log in with your superuser credentials.
+2. Navigate to Sites and change the domain to:
+   - 127.0.0.1:8000
+3. Go to Social Applications:
+   - Add a new application.
+   - Choose Google as the provider.
+   - Enter your Client ID and Client Secret.
+   - Move 127.0.0.1:8000 from "Available sites" to "Chosen sites".
+   - Save.
 
 ### Deployment
 
