@@ -110,9 +110,9 @@ Before installation, ensure you have these installed:
    ```
 
    ⚠️ If you face migration issues:
-   1. Delete db.sqlite3
-   2. Delete all .py files (except __init__.py) inside each app's migrations/ folder
-   3. Re-run the above commands
+   - Delete db.sqlite3
+   - Delete all .py files (except __init__.py) inside each app's migrations/ folder
+   - Re-run the above commands
 
 ## Collect Static Files
    ```bash
