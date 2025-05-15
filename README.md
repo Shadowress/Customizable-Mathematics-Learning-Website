@@ -12,8 +12,8 @@ The main goal of this project is to build a **customizable e-learning platform**
   - **Admins** (Administer the platform)
   
 - **Customizable Features**:
-  - AI Sign Language Text-to-Speech (toggle on/off)
-  - Dark Mode, Font Size, and Text Spacing adjustments
+  - Dark Mode and Color Theme adjustments
+  - Font Size and Text Spacing adjustments
 
 - **Course Management**:
   - Courses categorized by learning levels (Junior, Intermediate, Advanced)
@@ -32,36 +32,113 @@ The main goal of this project is to build a **customizable e-learning platform**
 - **SQLite**: Default database used for development.
 - **Nginx / Gunicorn**: For deployment on the server.
 
-### Installation
+### Installation Guide
 
-1. **Clone the repository**:
+## Prerequisites
+Before installation, ensure you have these installed:
+
+1. **Python 3.8+**:
+   - Download from [python.org](https://www.python.org/downloads/)
+   - Check "Add Python to PATH" during installation
+
+2. **Git**:
+   - Download from [git-scm.com](https://git-scm.com/download/win)
+
+3. **FFmpeg**:
     ```bash
-    git clone https://github.com/yourusername/CustomizableLearningPlatform.git
+    winget install ffmpeg
+    ```
+    
+## Clone the repository 
+    ```bash
+    git clone https://github.com/Shadowress/Customizable-Mathematics-Learning-Website
     cd CustomizableLearningPlatform
     ```
-
-2. **Set up a virtual environment**:
+    
+## Set up a virtual environment
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    venv\Scripts\activate
     ```
 
-3. **Install dependencies**:
+## Install dependencies
     ```bash
     pip install -r requirements.txt
     ```
 
-4. **Apply migrations**:
+## Google OAuth Setup
+1. **Google Account Setup**:
+   - Make sure your Google account has 2-Step Verification enabled.
+   - Go to your Google App Passwords and generate an App Password. Save it.
+
+2. **Google Cloud Console Setup**:
+   - Go to Google Cloud Console.
+   - Create a new project.
+   - Set up OAuth 2.0 Client IDs under APIs & Services > Credentials.
+   - Add the following to Authorized redirect URIs:
+       - http://127.0.0.1:8000/accounts/google/login/callback/
+       - http://localhost:8000/accounts/google/login/callback/
+   - Save your Client ID and Client Secret.
+
+## Environment Configurations
+1. Rename .env.example to .env:
     ```bash
+    ren .env.example .env
+    ```
+
+2. Open .env in Notepad:
+    ```bash
+    notepad .env
+    ```
+
+3. Inside .env, configure the following:
+   - Generate a Django secret key:
+      ```bash
+      python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+      ```
+   - Fill in:
+      SECRET_KEY=<your-generated-secret-key>
+      EMAIL_HOST_USER=<your-google-email>
+      EMAIL_HOST_PASSWORD=<your-app-password>
+
+## Database Setup
+    ```bash
+    python manage.py makemigrations users
+    python manage.py makemigrations courses
     python manage.py migrate
     ```
 
-5. **Run the development server**:
+    ⚠️ If you face migration issues:
+       - Delete db.sqlite3
+       - Delete all .py files (except __init__.py) inside each app's migrations/ folder
+       - Re-run the above commands
+
+## Collect Static Files
+    ```bash
+    python manage.py collectstatic
+    ```
+
+## Create Admin User
+    ```bash
+    python manage.py createsuperuser
+    ```
+
+## Start the Server
     ```bash
     python manage.py runserver
     ```
+    Visit: http://127.0.0.1:8000
 
-    The application will be available at `http://127.0.0.1:8000/`.
+## Django Admin Configuration
+    1. Go to http://127.0.0.1:8000/admin and log in with your superuser credentials.
+    2. Navigate to Sites and change the domain to:
+       - 127.0.0.1:8000
+    3. Go to Social Applications:
+       - Add a new application.
+       - Choose Google as the provider.
+       - Enter your Client ID and Client Secret.
+       - Move 127.0.0.1:8000 from "Available sites" to "Chosen sites".
+       - Save.
 
 ### Deployment
 
@@ -70,13 +147,6 @@ This project was also an opportunity to learn how to deploy a Django application
 1. Setting up a **production environment** using **Nginx** and **Gunicorn**.
 2. Configuring **SSL certificates** for secure HTTP.
 3. Using **PostgreSQL** for production data storage (as opposed to SQLite).
-4. Automating the deployment process using **Docker** (optional) or simple bash scripts for production server setup.
-
-### Future Work
-
-- Add more **interactive features** for students (e.g., quizzes, assignments).
-- Improve **AI sign language features** and make them more robust.
-- Implement **real-time chat or support systems** for students.
 
 ### License
 
